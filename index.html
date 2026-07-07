@@ -4,12 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Build Room #1</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" async defer></script>
     <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body { height: 100%; overflow: hidden; }
     body {
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-        background: #0f0f0f;
+        background: #000000;
         color: #f0f0f0;
         -webkit-tap-highlight-color: transparent;
     }
@@ -46,10 +47,47 @@
     }
     .topbar-logo {
         margin-left: auto;
-        font-size: 10px;
+        display: flex;
+        align-items: center;
+    }
+    .topbar-logo img {
+        height: 32px;
+        min-height: 28px;
+        max-height: 40px;
+        display: block;
+    }
+    .topbar-logo-fallback {
+        font-size: 22px;
         font-weight: 700;
-        color: #c00;
-        letter-spacing: 1px;
+        color: #fff;
+        letter-spacing: 2px;
+        line-height: 32px;
+        display: none;
+    }
+    .topbar-print-btn {
+        margin-left: 12px;
+        min-width: 44px;
+        min-height: 44px;
+        padding: 8px 14px;
+        background: #222;
+        color: #f0f0f0;
+        border: 1px solid #444;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        white-space: nowrap;
+    }
+    .topbar-print-btn:active {
+        background: #333;
+    }
+    @media print {
+        .topbar-print-btn { display: none; }
+        /* Requirement 1.9: @media print from interactive view shows normal interactive layout */
+        /* Poster is only shown via JS toggle, not via @media print */
     }
 
     /* === Map View === */
@@ -70,8 +108,6 @@
     .map-svg {
         width: 100%;
         height: 100%;
-        max-width: 680px;
-        max-height: 520px;
     }
 
     /* === SVG Styles === */
@@ -90,12 +126,7 @@
         transition: fill 0.15s, stroke 0.15s;
     }
     .cab:active { fill: #2a2a2a; }
-    .cab[data-status="organized"] { stroke: #2ecc71; }
-    .cab[data-status="pending"] { stroke: #555; }
-    .cab[data-status="empty"] { stroke: #333; stroke-dasharray: 4 3; fill: none; }
-    .cab.selected { fill: #1a2a1a; stroke: #2ecc71; stroke-width: 2.5; }
-    .cab.selected[data-status="pending"] { fill: #1a1a2a; stroke: #5dade2; stroke-width: 2.5; }
-    .cab.selected[data-status="empty"] { fill: #1a1a1a; stroke: #666; stroke-width: 2; }
+    .cab.selected { fill: #0d1b2a; stroke: #005BAC; stroke-width: 2.5; }
 
     .cab-text {
         fill: #ddd;
@@ -123,9 +154,9 @@
         text-anchor: middle;
         dominant-baseline: middle;
     }
-    .door-line { stroke: #2ecc71; stroke-width: 3; stroke-linecap: round; }
+    .door-line { stroke: #005BAC; stroke-width: 3; stroke-linecap: round; }
     .door-text {
-        fill: #2ecc71;
+        fill: #005BAC;
         font-size: 8px;
         font-weight: 600;
         text-anchor: middle;
@@ -136,6 +167,38 @@
         font-size: 7px;
         text-anchor: middle;
         letter-spacing: 0.5px;
+    }
+
+    /* === Back Button Overlay === */
+    .back-btn {
+        position: absolute;
+        top: 12px;
+        left: 12px;
+        min-width: 44px;
+        min-height: 44px;
+        padding: 8px 14px;
+        background: #222;
+        color: #f0f0f0;
+        border: 1px solid #444;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        z-index: 5;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.25s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        touch-action: manipulation;
+    }
+    .back-btn.visible {
+        opacity: 1;
+        pointer-events: auto;
+    }
+    .back-btn:active {
+        background: #333;
     }
 
     /* === Bottom Sheet === */
@@ -161,8 +224,8 @@
         transform: translateY(100%);
         transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
         z-index: 20;
-        max-height: 70vh;
-        max-height: 70dvh;
+        max-height: 40vh;
+        max-height: 40dvh;
         display: flex;
         flex-direction: column;
     }
@@ -194,9 +257,7 @@
         border-radius: 4px;
         font-weight: 600;
     }
-    .sheet-status.organized { background: #1a3a2a; color: #2ecc71; }
-    .sheet-status.pending { background: #1a2a3a; color: #5dade2; }
-    .sheet-status.empty { background: #222; color: #666; }
+    
 
     .sheet-location {
         padding: 0 20px 12px;
@@ -262,6 +323,157 @@
         .sheet.open { transform: none; }
         .sheet-handle { display: none; }
     }
+
+    /* === Print Poster View === */
+    #posterView {
+        display: none;
+        background: #fff;
+        color: #000;
+        padding: 0.5in;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+        min-height: 100vh;
+    }
+    #posterView.visible { display: block; }
+    #posterView .poster-header {
+        text-align: center;
+        margin-bottom: 0.3in;
+    }
+    #posterView .poster-title {
+        font-size: 24px;
+        font-weight: 700;
+        margin-bottom: 8px;
+        color: #000;
+    }
+    #posterView .poster-subtitle {
+        font-size: 12px;
+        color: #555;
+    }
+    #posterView .poster-qr {
+        text-align: center;
+        margin-bottom: 0.25in;
+    }
+    #posterView .poster-qr-container {
+        display: inline-block;
+        min-width: 128px;
+        min-height: 128px;
+    }
+    #posterView .poster-qr-placeholder {
+        display: inline-block;
+        min-width: 128px;
+        min-height: 128px;
+        border: 2px dashed #999;
+        padding: 16px;
+        font-size: 11px;
+        color: #555;
+        text-align: center;
+        line-height: 1.4;
+    }
+    #posterView .poster-qr-label {
+        font-size: 10px;
+        color: #666;
+        margin-top: 4px;
+    }
+    #posterView .poster-map {
+        width: 100%;
+        max-width: 7.5in;
+        margin: 0 auto;
+        display: block;
+    }
+    #posterView .poster-map svg {
+        width: 100%;
+        height: auto;
+    }
+    #posterView .poster-back-btn {
+        position: fixed;
+        top: 12px;
+        right: 12px;
+        padding: 8px 16px;
+        background: #333;
+        color: #fff;
+        border: none;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        z-index: 100;
+    }
+    #posterView .poster-back-btn:hover { background: #555; }
+
+    /* Poster annotations */
+    #posterView .poster-annotation-text {
+        font-size: 7px;
+        fill: #000;
+        font-weight: 600;
+    }
+    #posterView .poster-annotation-cats {
+        font-size: 6px;
+        fill: #333;
+    }
+    #posterView .poster-leader-line {
+        stroke: #000;
+        stroke-width: 0.5;
+        fill: none;
+    }
+
+    /* Poster SVG element styles */
+    #posterView .poster-room-border {
+        fill: #fff;
+        stroke: #000;
+        stroke-width: 2;
+    }
+    #posterView .poster-cab {
+        fill: #f5f5f5;
+        stroke: #000;
+        stroke-width: 1;
+    }
+    #posterView .poster-cab-text {
+        fill: #000;
+        font-size: 9px;
+        font-weight: 700;
+        text-anchor: middle;
+        dominant-baseline: middle;
+    }
+    #posterView .poster-fixture-rect {
+        fill: none;
+        stroke: #000;
+        stroke-width: 1;
+    }
+    #posterView .poster-fixture-text {
+        fill: #000;
+        font-size: 9px;
+        text-anchor: middle;
+        dominant-baseline: middle;
+    }
+    #posterView .poster-door-line {
+        stroke: #000;
+        stroke-width: 2.5;
+        stroke-linecap: round;
+    }
+    #posterView .poster-door-text {
+        fill: #000;
+        font-size: 8px;
+        font-weight: 600;
+        text-anchor: middle;
+    }
+    #posterView .poster-wall-label {
+        fill: #555;
+        font-size: 7px;
+        text-anchor: middle;
+        letter-spacing: 0.5px;
+    }
+
+    /* Print-specific styles for poster */
+    @media print {
+        #posterView .poster-back-btn { display: none; }
+        #posterView {
+            padding: 0;
+            min-height: auto;
+        }
+    }
+    @page {
+        size: letter portrait;
+        margin: 0.5in;
+    }
     </style>
 </head>
 <body>
@@ -269,10 +481,15 @@
     <div class="topbar">
         <span class="topbar-title">Build Room #1</span>
         <span class="topbar-room">Floor Map</span>
-        <span class="topbar-logo">TENNECO</span>
+        <span class="topbar-logo">
+            <img src="tenneco-logo.png" alt="Tenneco" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+            <span class="topbar-logo-fallback">TENNECO</span>
+        </span>
+        <button class="topbar-print-btn" onclick="PrintPoster.generate()">Print Poster</button>
     </div>
 
     <div class="map-view">
+        <button class="back-btn" id="backBtn" aria-label="Back to full view">← Back</button>
         <div class="map-scroll">
             <svg class="map-svg" viewBox="0 0 600 450" preserveAspectRatio="xMidYMid meet">
                 <!-- Room -->
@@ -287,43 +504,43 @@
                 <text class="door-text" x="300" y="432">DOOR</text>
 
                 <!-- LEFT WALL -->
-                <rect class="cab" data-id="cab1" data-status="organized" x="20" y="35" width="95" height="80"/>
+                <rect class="cab" data-id="cab1" data-wall="left" x="20" y="35" width="95" height="80"/>
                 <text class="cab-text" x="67" y="70">General</text>
                 <text class="cab-subtext" x="67" y="84">Tools</text>
 
-                <rect class="cab" data-id="cab2" data-status="pending" x="20" y="130" width="95" height="80"/>
+                <rect class="cab" data-id="cab2" data-wall="left" x="20" y="130" width="95" height="80"/>
                 <text class="cab-text" x="67" y="165">Sockets</text>
                 <text class="cab-subtext" x="67" y="179">& Drives</text>
 
-                <rect class="cab" data-id="cab3" data-status="pending" x="20" y="225" width="95" height="80"/>
+                <rect class="cab" data-id="cab3" data-wall="left" x="20" y="225" width="95" height="80"/>
                 <text class="cab-text" x="67" y="260">Torque</text>
                 <text class="cab-subtext" x="67" y="274">Tools</text>
 
-                <rect class="cab" data-id="cab4" data-status="empty" x="20" y="320" width="95" height="80"/>
+                <rect class="cab" data-id="cab4" data-wall="left" x="20" y="320" width="95" height="80"/>
                 <text class="cab-text" x="67" y="357">TBD</text>
 
                 <!-- BACK WALL -->
-                <rect class="cab" data-id="cab5" data-status="pending" x="145" y="35" width="120" height="65"/>
+                <rect class="cab" data-id="cab5" data-wall="back" x="145" y="35" width="120" height="65"/>
                 <text class="cab-text" x="205" y="62">Fluids</text>
                 <text class="cab-subtext" x="205" y="76">& Chemicals</text>
 
-                <rect class="cab" data-id="cab6" data-status="pending" x="290" y="35" width="120" height="65"/>
+                <rect class="cab" data-id="cab6" data-wall="back" x="290" y="35" width="120" height="65"/>
                 <text class="cab-text" x="350" y="62">Measurement</text>
                 <text class="cab-subtext" x="350" y="76">& Gauges</text>
 
-                <rect class="cab" data-id="cab7" data-status="empty" x="435" y="35" width="120" height="65"/>
+                <rect class="cab" data-id="cab7" data-wall="back" x="435" y="35" width="120" height="65"/>
                 <text class="cab-text" x="495" y="62">TBD</text>
 
                 <!-- RIGHT WALL -->
-                <rect class="cab" data-id="cab8" data-status="pending" x="485" y="130" width="95" height="80"/>
+                <rect class="cab" data-id="cab8" data-wall="right" x="485" y="130" width="95" height="80"/>
                 <text class="cab-text" x="532" y="165">Fasteners</text>
                 <text class="cab-subtext" x="532" y="179">& Hardware</text>
 
-                <rect class="cab" data-id="cab9" data-status="pending" x="485" y="225" width="95" height="80"/>
+                <rect class="cab" data-id="cab9" data-wall="right" x="485" y="225" width="95" height="80"/>
                 <text class="cab-text" x="532" y="260">Engine</text>
                 <text class="cab-subtext" x="532" y="274">Parts</text>
 
-                <rect class="cab" data-id="cab10" data-status="empty" x="485" y="320" width="95" height="80"/>
+                <rect class="cab" data-id="cab10" data-wall="right" x="485" y="320" width="95" height="80"/>
                 <text class="cab-text" x="532" y="357">TBD</text>
 
                 <!-- Workbench (center) -->
@@ -349,91 +566,313 @@
 
 <script>
 // ================================================================
-// ROOM DATA — Update this as you organize each cabinet
+// ROOM DATA — Flat cabinet model: { name, location, categories[] }
+// Constraints: name ≤30 chars, location ≤50 chars, 1–10 categories each ≤40 chars
 // ================================================================
 const ROOM = {
     cab1: {
         name: "General Tools",
-        status: "organized",
         location: "Left wall · Cabinet 1",
-        sections: [
-            { title: "Top Shelf", items: ["Hammers (ball peen, rubber mallet)", "Pry bars", "Punch set", "Chisels"] },
-            { title: "Middle Shelf", items: ["Screwdriver sets (Phillips, flat, Torx)", "Pliers (needle nose, channel lock, snap ring)", "Allen key sets (SAE & metric)"] },
-            { title: "Drawers", items: ["Socket set — 1/4\" drive", "Socket set — 3/8\" drive", "Socket set — 1/2\" drive", "Extensions & universals", "Ratchets"] },
-            { title: "Bottom", items: ["Adjustable wrenches", "Combo wrench sets", "Breaker bars"] }
+        categories: [
+            "Hammers",
+            "Pry bars & chisels",
+            "Screwdriver sets",
+            "Pliers",
+            "Allen key sets",
+            "Socket sets",
+            "Wrenches"
         ]
     },
     cab2: {
         name: "Sockets & Drives",
-        status: "pending",
         location: "Left wall · Cabinet 2",
-        sections: [
-            { title: "Contents (unsorted)", items: ["Deep sockets — various", "Impact sockets", "Specialty (E-Torx, spline)", "Adapters & reducers", "Crow foot wrenches"] }
+        categories: [
+            "Deep sockets",
+            "Impact sockets",
+            "Specialty sockets (E-Torx, spline)",
+            "Adapters & reducers",
+            "Crow foot wrenches"
         ]
     },
     cab3: {
         name: "Torque Tools",
-        status: "pending",
         location: "Left wall · Cabinet 3",
-        sections: [
-            { title: "Contents (unsorted)", items: ["Torque wrenches (click)", "Torque wrenches (dial)", "Torque multiplier", "Calibration records", "Torque angle gauge"] }
+        categories: [
+            "Torque wrenches (click type)",
+            "Torque wrenches (dial type)",
+            "Torque multipliers",
+            "Calibration records",
+            "Torque angle gauges"
         ]
     },
     cab4: {
         name: "Unmapped",
-        status: "empty",
         location: "Left wall · Cabinet 4",
-        sections: [
-            { title: "Status", items: ["Not yet inventoried"] }
-        ]
+        categories: []
     },
     cab5: {
         name: "Fluids & Chemicals",
-        status: "pending",
         location: "Back wall · Left section",
-        sections: [
-            { title: "Contents (unsorted)", items: ["Engine oils (various grades)", "Coolant", "Brake cleaner", "Penetrating oil", "Thread locker (blue/red)", "Silicone sealant", "Anti-seize"] }
+        categories: [
+            "Engine oils",
+            "Coolant",
+            "Brake cleaner",
+            "Penetrating oil",
+            "Thread locker",
+            "Silicone sealant",
+            "Anti-seize"
         ]
     },
     cab6: {
         name: "Measurement & Gauges",
-        status: "pending",
         location: "Back wall · Center section",
-        sections: [
-            { title: "Contents (unsorted)", items: ["Dial indicators", "Calipers (digital/dial)", "Micrometers", "Feeler gauges", "Bore gauges", "Magnetic bases"] }
+        categories: [
+            "Dial indicators",
+            "Calipers",
+            "Micrometers",
+            "Feeler gauges",
+            "Bore gauges",
+            "Magnetic bases"
         ]
     },
     cab7: {
         name: "Unmapped",
-        status: "empty",
         location: "Back wall · Right section",
-        sections: [
-            { title: "Status", items: ["Not yet inventoried"] }
-        ]
+        categories: []
     },
     cab8: {
         name: "Fasteners & Hardware",
-        status: "pending",
         location: "Right wall · Cabinet 1",
-        sections: [
-            { title: "Contents (unsorted)", items: ["Bolts (metric & SAE)", "Nuts & washers", "Hose clamps", "Cotter pins & clips", "O-rings (assorted)", "Gasket material"] }
+        categories: [
+            "Bolts (metric & SAE)",
+            "Nuts & washers",
+            "Hose clamps",
+            "Cotter pins & clips",
+            "O-rings",
+            "Gasket material"
         ]
     },
     cab9: {
         name: "Engine Parts",
-        status: "pending",
         location: "Right wall · Cabinet 2",
-        sections: [
-            { title: "Contents (unsorted)", items: ["Spare sensors", "Gaskets (common)", "Belts", "Hoses & fittings", "Filters (oil, fuel, air)", "Plugs & caps"] }
+        categories: [
+            "Spare sensors",
+            "Gaskets",
+            "Belts",
+            "Hoses & fittings",
+            "Filters (oil, fuel, air)",
+            "Plugs & caps"
         ]
     },
     cab10: {
         name: "Unmapped",
-        status: "empty",
         location: "Right wall · Cabinet 3",
-        sections: [
-            { title: "Status", items: ["Not yet inventoried"] }
-        ]
+        categories: []
+    }
+};
+
+// ================================================================
+// ViewBox Controller — Zoom/Pan state management
+// ================================================================
+const ViewBoxController = {
+    /** Full room viewBox (default state) */
+    FULL_VIEW: { x: 0, y: 0, w: 600, h: 450 },
+
+    /** Current viewBox state */
+    current: { x: 0, y: 0, w: 600, h: 450 },
+
+    /** Whether currently zoomed in */
+    isZoomed: false,
+
+    /** Reference to the SVG element */
+    _svg: null,
+
+    /** Active animation frame ID (for cancellation) */
+    _animFrame: null,
+
+    /** Get the SVG element (lazy init) */
+    _getSvg() {
+        if (!this._svg) {
+            this._svg = document.querySelector('.map-svg');
+        }
+        return this._svg;
+    },
+
+    /** Apply current viewBox to the SVG element */
+    _applyViewBox() {
+        const svg = this._getSvg();
+        if (svg) {
+            svg.setAttribute('viewBox', `${this.current.x} ${this.current.y} ${this.current.w} ${this.current.h}`);
+        }
+    },
+
+    /** EaseInOutCubic easing function */
+    _easeInOutCubic(t) {
+        return t < 0.5
+            ? 4 * t * t * t
+            : 1 - Math.pow(-2 * t + 2, 3) / 2;
+    },
+
+    /**
+     * Animate viewBox to target over duration with easing.
+     * @param {Object} target - Destination viewBox { x, y, w, h }
+     * @param {number} duration - Animation time in ms (default 400)
+     * @returns {Promise<void>}
+     */
+    animateTo(target, duration = 400) {
+        return new Promise((resolve) => {
+            // Cancel any in-progress animation
+            if (this._animFrame) {
+                cancelAnimationFrame(this._animFrame);
+                this._animFrame = null;
+            }
+
+            const start = { ...this.current };
+            const startTime = performance.now();
+
+            const step = (now) => {
+                const elapsed = now - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const eased = this._easeInOutCubic(progress);
+
+                this.current.x = start.x + (target.x - start.x) * eased;
+                this.current.y = start.y + (target.y - start.y) * eased;
+                this.current.w = start.w + (target.w - start.w) * eased;
+                this.current.h = start.h + (target.h - start.h) * eased;
+
+                this._applyViewBox();
+
+                if (progress < 1) {
+                    this._animFrame = requestAnimationFrame(step);
+                } else {
+                    this._animFrame = null;
+                    resolve();
+                }
+            };
+
+            this._animFrame = requestAnimationFrame(step);
+        });
+    },
+
+    /**
+     * Compute zoom viewBox centered on a cabinet and its same-wall neighbors.
+     * @param {string} cabinetId - Cabinet identifier (e.g. "cab1")
+     * @returns {Object} ViewBox { x, y, w, h }
+     */
+    computeZoomTarget(cabinetId) {
+        const svg = this._getSvg();
+        const cabEl = svg.querySelector(`[data-id="${cabinetId}"]`);
+        if (!cabEl) return { ...this.FULL_VIEW };
+
+        const wall = cabEl.getAttribute('data-wall');
+
+        // Find all cabinets on the same wall
+        const sameWallCabs = svg.querySelectorAll(`[data-wall="${wall}"]`);
+
+        // Get bounding box of the target cabinet
+        const targetX = parseFloat(cabEl.getAttribute('x'));
+        const targetY = parseFloat(cabEl.getAttribute('y'));
+        const targetW = parseFloat(cabEl.getAttribute('width'));
+        const targetH = parseFloat(cabEl.getAttribute('height'));
+
+        // Find adjacent cabinets (immediately above and below, or left and right)
+        // by sorting same-wall cabinets and selecting neighbors
+        const cabInfos = [];
+        sameWallCabs.forEach(el => {
+            cabInfos.push({
+                id: el.getAttribute('data-id'),
+                x: parseFloat(el.getAttribute('x')),
+                y: parseFloat(el.getAttribute('y')),
+                w: parseFloat(el.getAttribute('width')),
+                h: parseFloat(el.getAttribute('height'))
+            });
+        });
+
+        // Sort by position (y for left/right walls, x for back wall)
+        if (wall === 'back') {
+            cabInfos.sort((a, b) => a.x - b.x);
+        } else {
+            cabInfos.sort((a, b) => a.y - b.y);
+        }
+
+        // Find index of target cabinet
+        const targetIdx = cabInfos.findIndex(c => c.id === cabinetId);
+
+        // Include adjacent cabinets (one before and one after)
+        const startIdx = Math.max(0, targetIdx - 1);
+        const endIdx = Math.min(cabInfos.length - 1, targetIdx + 1);
+        const includedCabs = cabInfos.slice(startIdx, endIdx + 1);
+
+        // Compute bounding box of all included cabinets
+        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+        includedCabs.forEach(c => {
+            minX = Math.min(minX, c.x);
+            minY = Math.min(minY, c.y);
+            maxX = Math.max(maxX, c.x + c.w);
+            maxY = Math.max(maxY, c.y + c.h);
+        });
+
+        // Add padding (20% of the bounding area on each side)
+        const bboxW = maxX - minX;
+        const bboxH = maxY - minY;
+        const padX = bboxW * 0.25;
+        const padY = bboxH * 0.25;
+
+        let viewW = bboxW + padX * 2;
+        let viewH = bboxH + padY * 2;
+
+        // Maintain the room aspect ratio (4:3 = 600:450)
+        const aspect = 600 / 450;
+        if (viewW / viewH > aspect) {
+            viewH = viewW / aspect;
+        } else {
+            viewW = viewH * aspect;
+        }
+
+        // Center on the target cabinet midpoint
+        const centerX = targetX + targetW / 2;
+        const centerY = targetY + targetH / 2;
+
+        let viewX = centerX - viewW / 2;
+        let viewY = centerY - viewH / 2;
+
+        // Clamp to room boundaries
+        viewX = Math.max(0, Math.min(viewX, 600 - viewW));
+        viewY = Math.max(0, Math.min(viewY, 450 - viewH));
+
+        // Ensure view dimensions don't exceed room
+        viewW = Math.min(viewW, 600);
+        viewH = Math.min(viewH, 450);
+
+        return { x: viewX, y: viewY, w: viewW, h: viewH };
+    },
+
+    /**
+     * Apply pan delta, clamping to room boundaries.
+     * @param {number} dx - Horizontal delta in SVG units
+     * @param {number} dy - Vertical delta in SVG units
+     */
+    pan(dx, dy) {
+        let newX = this.current.x + dx;
+        let newY = this.current.y + dy;
+
+        // Clamp: x >= 0, y >= 0, x+w <= 600, y+h <= 450
+        newX = Math.max(0, Math.min(newX, 600 - this.current.w));
+        newY = Math.max(0, Math.min(newY, 450 - this.current.h));
+
+        this.current.x = newX;
+        this.current.y = newY;
+
+        this._applyViewBox();
+    },
+
+    /**
+     * Reset to full view with animation.
+     * @returns {Promise<void>}
+     */
+    resetToFull() {
+        this.isZoomed = false;
+        return this.animateTo(this.FULL_VIEW);
     }
 };
 
@@ -446,14 +885,10 @@ const sheetTitle = document.getElementById('sheetTitle');
 const sheetStatus = document.getElementById('sheetStatus');
 const sheetLocation = document.getElementById('sheetLocation');
 const sheetBody = document.getElementById('sheetBody');
+const backBtn = document.getElementById('backBtn');
 const isMobile = () => window.innerWidth < 769;
 
 let selected = null;
-
-document.querySelectorAll('.cab').forEach(el => {
-    el.addEventListener('click', () => openCabinet(el.dataset.id));
-    el.addEventListener('touchend', (e) => { e.preventDefault(); openCabinet(el.dataset.id); });
-});
 
 backdrop.addEventListener('click', closeSheet);
 
@@ -469,23 +904,23 @@ function openCabinet(id) {
     // Fill sheet
     sheetTitle.textContent = data.name;
     sheetLocation.textContent = data.location;
-
-    const statusLabels = { organized: 'Organized', pending: 'Pending', empty: 'Unmapped' };
-    sheetStatus.textContent = statusLabels[data.status];
-    sheetStatus.className = 'sheet-status ' + data.status;
+    sheetStatus.textContent = '';
+    sheetStatus.className = 'sheet-status';
 
     let html = '';
-    data.sections.forEach(s => {
-        html += `<div class="section-title">${s.title}</div><ul class="item-list">`;
-        s.items.forEach(item => {
-            html += `<li><span class="item-dot"></span>${item}</li>`;
+    if (data.categories.length === 0) {
+        html = '<p style="color:#666; font-size:13px; padding-top:20px; text-align:center;">Contents not yet inventoried</p>';
+    } else {
+        html = '<div class="section-title">Categories</div><ul class="item-list">';
+        data.categories.forEach(cat => {
+            html += `<li><span class="item-dot"></span>${cat}</li>`;
         });
         html += '</ul>';
-    });
+    }
     sheetBody.innerHTML = html;
 
-    // Open sheet on mobile
-    if (isMobile()) {
+    // Open sheet on mobile only when zoomed (Detail Panel requires Zoom_View)
+    if (isMobile() && ViewBoxController.isZoomed) {
         sheet.classList.add('open');
         backdrop.classList.add('open');
     }
@@ -498,18 +933,581 @@ function closeSheet() {
     }
 }
 
-// Swipe down to close on mobile
-let touchStartY = 0;
-sheet.addEventListener('touchstart', e => { touchStartY = e.touches[0].clientY; });
+// Swipe down to close panel on mobile (≥80px gesture, map stays in Zoom_View)
+let sheetTouchStartY = 0;
+let sheetTouchActive = false;
+sheet.addEventListener('touchstart', e => {
+    sheetTouchStartY = e.touches[0].clientY;
+    sheetTouchActive = true;
+}, { passive: true });
 sheet.addEventListener('touchmove', e => {
-    const dy = e.touches[0].clientY - touchStartY;
-    if (dy > 80) closeSheet();
+    if (!sheetTouchActive) return;
+    const dy = e.touches[0].clientY - sheetTouchStartY;
+    if (dy >= 80) {
+        // Dismiss panel only — map remains in Zoom_View
+        closeSheet();
+        sheetTouchActive = false;
+    }
+}, { passive: true });
+sheet.addEventListener('touchend', () => { sheetTouchActive = false; });
+sheet.addEventListener('touchcancel', () => { sheetTouchActive = false; });
+
+// ================================================================
+// Back Button — Show/hide based on zoom state
+// ================================================================
+function updateBackButton() {
+    if (ViewBoxController.isZoomed) {
+        backBtn.classList.add('visible');
+    } else {
+        backBtn.classList.remove('visible');
+    }
+}
+
+backBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    ViewBoxController.resetToFull().then(updateBackButton);
+    closeSheet();
+    document.querySelectorAll('.cab').forEach(c => c.classList.remove('selected'));
+    selected = null;
+    updateBackButton();
 });
+
+// Prevent Back button pointer events from reaching GestureHandler
+backBtn.addEventListener('pointerdown', (e) => { e.stopPropagation(); });
+backBtn.addEventListener('pointermove', (e) => { e.stopPropagation(); });
+backBtn.addEventListener('pointerup', (e) => { e.stopPropagation(); });
+
+// ================================================================
+// Gesture Handler — Unified Pointer Events for touch + mouse
+// ================================================================
+const GestureHandler = {
+    /** @type {HTMLElement|null} Map container element */
+    _container: null,
+
+    /** @type {SVGSVGElement|null} SVG element */
+    _svg: null,
+
+    /** Active pointers map: pointerId → { x, y, startX, startY, startTime } */
+    _pointers: new Map(),
+
+    /** Whether a drag is in progress */
+    _isDragging: false,
+
+    /** Tap threshold: max movement in px to still count as tap */
+    _TAP_THRESHOLD: 10,
+
+    /** Tap max duration in ms */
+    _TAP_MAX_DURATION: 300,
+
+    /** Pinch-out distance increase threshold (px) to trigger zoom-out */
+    _PINCH_OUT_THRESHOLD: 50,
+
+    /** Initial pinch distance when two pointers first detected */
+    _initialPinchDistance: 0,
+
+    /**
+     * Initialize event listeners on the map container.
+     * @param {HTMLElement} mapContainer
+     */
+    init(mapContainer) {
+        this._container = mapContainer;
+        this._svg = mapContainer.querySelector('.map-svg');
+
+        // Pointer events for unified mouse + touch
+        mapContainer.addEventListener('pointerdown', (e) => this._onPointerDown(e));
+        mapContainer.addEventListener('pointermove', (e) => this._onPointerMove(e));
+        mapContainer.addEventListener('pointerup', (e) => this._onPointerUp(e));
+        mapContainer.addEventListener('pointercancel', (e) => this._onPointerUp(e));
+
+        // Scroll-wheel zoom for desktop
+        mapContainer.addEventListener('wheel', (e) => this._onWheel(e), { passive: false });
+    },
+
+    /**
+     * Determine if a pointer event hit a cabinet element.
+     * @param {PointerEvent} event
+     * @returns {string|null} Cabinet data-id or null
+     */
+    hitTest(event) {
+        const target = event.target;
+        // Check if the target itself is a cab rect
+        if (target.classList && target.classList.contains('cab')) {
+            return target.getAttribute('data-id');
+        }
+        // Check parent (for cases where text overlays are hit — though pointer-events: none should prevent this)
+        if (target.closest) {
+            const cabEl = target.closest('.cab');
+            if (cabEl) return cabEl.getAttribute('data-id');
+        }
+        // Use elementsFromPoint as fallback for SVG hit detection
+        const elements = document.elementsFromPoint(event.clientX, event.clientY);
+        for (const el of elements) {
+            if (el.classList && el.classList.contains('cab')) {
+                return el.getAttribute('data-id');
+            }
+        }
+        return null;
+    },
+
+    /**
+     * Get distance between two pointer entries.
+     * @param {Object} p1 - { x, y }
+     * @param {Object} p2 - { x, y }
+     * @returns {number}
+     */
+    _getDistance(p1, p2) {
+        const dx = p2.x - p1.x;
+        const dy = p2.y - p1.y;
+        return Math.sqrt(dx * dx + dy * dy);
+    },
+
+    /**
+     * Convert pixel delta to SVG coordinate delta.
+     * @param {number} dxPx - Pixel delta X
+     * @param {number} dyPx - Pixel delta Y
+     * @returns {{ dx: number, dy: number }} SVG coordinate deltas
+     */
+    _pixelToSvgDelta(dxPx, dyPx) {
+        const svgRect = this._svg.getBoundingClientRect();
+        const scaleX = ViewBoxController.current.w / svgRect.width;
+        const scaleY = ViewBoxController.current.h / svgRect.height;
+        return { dx: dxPx * scaleX, dy: dyPx * scaleY };
+    },
+
+    /**
+     * Handle pointer down: track pointer for tap/drag/pinch detection.
+     * @param {PointerEvent} e
+     */
+    _onPointerDown(e) {
+        // Capture the pointer for reliable tracking
+        this._container.setPointerCapture(e.pointerId);
+
+        this._pointers.set(e.pointerId, {
+            x: e.clientX,
+            y: e.clientY,
+            startX: e.clientX,
+            startY: e.clientY,
+            startTime: performance.now()
+        });
+
+        this._isDragging = false;
+
+        // If two pointers, record initial pinch distance
+        if (this._pointers.size === 2) {
+            const pts = Array.from(this._pointers.values());
+            this._initialPinchDistance = this._getDistance(pts[0], pts[1]);
+        }
+    },
+
+    /**
+     * Handle pointer move: drag/pan or pinch detection.
+     * @param {PointerEvent} e
+     */
+    _onPointerMove(e) {
+        if (!this._pointers.has(e.pointerId)) return;
+
+        const pointer = this._pointers.get(e.pointerId);
+        const prevX = pointer.x;
+        const prevY = pointer.y;
+
+        // Update current position
+        pointer.x = e.clientX;
+        pointer.y = e.clientY;
+
+        // Check if movement exceeds tap threshold → now dragging
+        const totalDx = pointer.x - pointer.startX;
+        const totalDy = pointer.y - pointer.startY;
+        if (Math.abs(totalDx) > this._TAP_THRESHOLD || Math.abs(totalDy) > this._TAP_THRESHOLD) {
+            this._isDragging = true;
+        }
+
+        // Single pointer drag/pan in zoomed state
+        if (this._pointers.size === 1 && this._isDragging && ViewBoxController.isZoomed) {
+            const dxPx = prevX - e.clientX; // Invert: drag right → pan left
+            const dyPx = prevY - e.clientY;
+            const { dx, dy } = this._pixelToSvgDelta(dxPx, dyPx);
+            ViewBoxController.pan(dx, dy);
+        }
+
+        // Two-pointer pinch detection
+        if (this._pointers.size === 2 && ViewBoxController.isZoomed) {
+            const pts = Array.from(this._pointers.values());
+            const currentDistance = this._getDistance(pts[0], pts[1]);
+            const distanceDelta = currentDistance - this._initialPinchDistance;
+
+            // Pinch-out (fingers spreading apart) → return to full view
+            if (distanceDelta > this._PINCH_OUT_THRESHOLD) {
+                this._pointers.clear();
+                this._isDragging = false;
+                this._initialPinchDistance = 0;
+                ViewBoxController.resetToFull().then(updateBackButton);
+                closeSheet();
+                document.querySelectorAll('.cab').forEach(c => c.classList.remove('selected'));
+                selected = null;
+                updateBackButton();
+            }
+        }
+    },
+
+    /**
+     * Handle pointer up: detect tap or end drag.
+     * @param {PointerEvent} e
+     */
+    _onPointerUp(e) {
+        const pointer = this._pointers.get(e.pointerId);
+        if (!pointer) return;
+
+        // Release capture
+        try { this._container.releasePointerCapture(e.pointerId); } catch (_) {}
+
+        this._pointers.delete(e.pointerId);
+
+        // If this was a multi-touch gesture, just clean up
+        if (this._pointers.size > 0) return;
+
+        const elapsed = performance.now() - pointer.startTime;
+        const totalDx = Math.abs(pointer.x - pointer.startX);
+        const totalDy = Math.abs(pointer.y - pointer.startY);
+
+        // Tap detection: short duration, minimal movement
+        const isTap = elapsed < this._TAP_MAX_DURATION &&
+                      totalDx < this._TAP_THRESHOLD &&
+                      totalDy < this._TAP_THRESHOLD;
+
+        if (isTap) {
+            this._handleTap(e);
+        }
+
+        this._isDragging = false;
+    },
+
+    /**
+     * Handle tap logic based on current view state.
+     * @param {PointerEvent} e
+     */
+    _handleTap(e) {
+        const cabinetId = this.hitTest(e);
+
+        if (!ViewBoxController.isZoomed) {
+            // Full_View: tap cabinet → zoom to it
+            if (cabinetId) {
+                const target = ViewBoxController.computeZoomTarget(cabinetId);
+                ViewBoxController.isZoomed = true;
+                ViewBoxController.animateTo(target);
+                openCabinet(cabinetId);
+                updateBackButton();
+            }
+        } else {
+            // Zoom_View
+            if (cabinetId) {
+                if (cabinetId === selected) {
+                    // Tap same cabinet — re-open panel if it was dismissed
+                    if (isMobile() && !sheet.classList.contains('open')) {
+                        sheet.classList.add('open');
+                        backdrop.classList.add('open');
+                    }
+                    return;
+                }
+                // Tap different cabinet → re-target zoom (requirement 2.8)
+                const target = ViewBoxController.computeZoomTarget(cabinetId);
+                ViewBoxController.animateTo(target);
+                openCabinet(cabinetId);
+            } else {
+                // Tap empty space → return to full view
+                ViewBoxController.resetToFull().then(updateBackButton);
+                closeSheet();
+                document.querySelectorAll('.cab').forEach(c => c.classList.remove('selected'));
+                selected = null;
+                updateBackButton();
+            }
+        }
+    },
+
+    /**
+     * Handle scroll-wheel zoom for desktop.
+     * Scroll down (positive deltaY) on a cabinet → zoom to it.
+     * Scroll up (negative deltaY) while zoomed → return to full view.
+     * @param {WheelEvent} e
+     */
+    _onWheel(e) {
+        e.preventDefault();
+
+        if (e.deltaY > 0 && !ViewBoxController.isZoomed) {
+            // Scroll down → zoom into cabinet under cursor
+            const elements = document.elementsFromPoint(e.clientX, e.clientY);
+            let cabinetId = null;
+            for (const el of elements) {
+                if (el.classList && el.classList.contains('cab')) {
+                    cabinetId = el.getAttribute('data-id');
+                    break;
+                }
+            }
+            if (cabinetId) {
+                const target = ViewBoxController.computeZoomTarget(cabinetId);
+                ViewBoxController.isZoomed = true;
+                ViewBoxController.animateTo(target);
+                openCabinet(cabinetId);
+                updateBackButton();
+            }
+        } else if (e.deltaY < 0 && ViewBoxController.isZoomed) {
+            // Scroll up → return to full view
+            ViewBoxController.resetToFull().then(updateBackButton);
+            closeSheet();
+            document.querySelectorAll('.cab').forEach(c => c.classList.remove('selected'));
+            selected = null;
+            updateBackButton();
+        }
+    }
+};
+
+// ================================================================
+// Initialize
+// ================================================================
+GestureHandler.init(document.querySelector('.map-view'));
 
 // On desktop, auto-show first organized cabinet
 if (!isMobile()) {
     openCabinet('cab1');
 }
+
+// ================================================================
+// Resize Handler — Re-fit view on viewport change
+// ================================================================
+window.addEventListener('resize', () => {
+    if (!ViewBoxController.isZoomed) {
+        // In Full_View: re-apply the full viewBox to ensure proper fit
+        ViewBoxController.current = { ...ViewBoxController.FULL_VIEW };
+        ViewBoxController._applyViewBox();
+    } else {
+        // In Zoom_View: re-clamp the current viewBox to room bounds
+        let { x, y, w, h } = ViewBoxController.current;
+        x = Math.max(0, Math.min(x, 600 - w));
+        y = Math.max(0, Math.min(y, 450 - h));
+        w = Math.min(w, 600);
+        h = Math.min(h, 450);
+        ViewBoxController.current = { x, y, w, h };
+        ViewBoxController._applyViewBox();
+    }
+});
+
+// ================================================================
+// Print Poster Generator
+// ================================================================
+const PrintPoster = {
+    /** GitHub Pages URL for QR code */
+    _url: (function() {
+        // Use current page URL or fallback
+        return window.location.href;
+    })(),
+
+    /**
+     * Generate and show the print poster view.
+     */
+    generate() {
+        try {
+            const app = document.querySelector('.app');
+            const posterView = document.getElementById('posterView');
+
+            // Show poster, hide interactive view
+            app.style.display = 'none';
+            posterView.classList.add('visible');
+
+            // Generate QR code
+            this._generateQR();
+
+            // Build annotated static map
+            this._buildStaticMap();
+
+            // Brief delay to let QR code render, then print
+            setTimeout(() => {
+                window.print();
+            }, 300);
+        } catch (err) {
+            alert('Failed to generate poster. Returning to interactive view.');
+            this.close();
+        }
+    },
+
+    /**
+     * Close poster view and restore interactive app.
+     */
+    close() {
+        const app = document.querySelector('.app');
+        const posterView = document.getElementById('posterView');
+
+        posterView.classList.remove('visible');
+        app.style.display = '';
+    },
+
+    /**
+     * Generate QR code or show placeholder if library unavailable.
+     */
+    _generateQR() {
+        const container = document.getElementById('posterQrContainer');
+        container.innerHTML = '';
+
+        if (typeof QRCode !== 'undefined') {
+            // Library available — generate QR code (min 113×113px → using 128×128)
+            new QRCode(container, {
+                text: this._url,
+                width: 128,
+                height: 128,
+                colorDark: '#000000',
+                colorLight: '#ffffff'
+            });
+        } else {
+            // Library failed to load — show placeholder text
+            container.innerHTML = '<div class="poster-qr-placeholder">QR Code unavailable<br><br>Visit:<br>' +
+                this._url.replace(/</g, '&lt;') + '</div>';
+        }
+    },
+
+    /**
+     * Build static SVG map with annotations and leader lines.
+     */
+    _buildStaticMap() {
+        const mapContainer = document.getElementById('posterMapContainer');
+
+        // Cabinet geometry data extracted from the SVG
+        const cabinets = [
+            { id: 'cab1', x: 20, y: 35, w: 95, h: 80, wall: 'left' },
+            { id: 'cab2', x: 20, y: 130, w: 95, h: 80, wall: 'left' },
+            { id: 'cab3', x: 20, y: 225, w: 95, h: 80, wall: 'left' },
+            { id: 'cab4', x: 20, y: 320, w: 95, h: 80, wall: 'left' },
+            { id: 'cab5', x: 145, y: 35, w: 120, h: 65, wall: 'back' },
+            { id: 'cab6', x: 290, y: 35, w: 120, h: 65, wall: 'back' },
+            { id: 'cab7', x: 435, y: 35, w: 120, h: 65, wall: 'back' },
+            { id: 'cab8', x: 485, y: 130, w: 95, h: 80, wall: 'right' },
+            { id: 'cab9', x: 485, y: 225, w: 95, h: 80, wall: 'right' },
+            { id: 'cab10', x: 485, y: 320, w: 95, h: 80, wall: 'right' }
+        ];
+
+        let svgContent = '';
+
+        // Room border
+        svgContent += '<rect class="poster-room-border" x="5" y="5" width="590" height="440" rx="6"/>';
+
+        // Wall labels
+        svgContent += '<text class="poster-wall-label" x="300" y="18">BACK WALL</text>';
+        svgContent += '<text class="poster-wall-label" x="300" y="438">FRONT (DOOR)</text>';
+
+        // Door
+        svgContent += '<line class="poster-door-line" x1="260" y1="443" x2="340" y2="443"/>';
+        svgContent += '<text class="poster-door-text" x="300" y="432">DOOR</text>';
+
+        // Workbench
+        svgContent += '<rect class="poster-fixture-rect" x="200" y="200" width="200" height="90" rx="3"/>';
+        svgContent += '<text class="poster-fixture-text" x="300" y="245">WORKBENCH</text>';
+
+        // Cabinet rects with name labels
+        cabinets.forEach(cab => {
+            const data = ROOM[cab.id];
+            svgContent += `<rect class="poster-cab" x="${cab.x}" y="${cab.y}" width="${cab.w}" height="${cab.h}" rx="4"/>`;
+            svgContent += `<text class="poster-cab-text" x="${cab.x + cab.w / 2}" y="${cab.y + cab.h / 2}">${data ? data.name : ''}</text>`;
+        });
+
+        // Annotations with leader lines
+        svgContent += this._buildAnnotations(cabinets);
+
+        // Wrap in SVG
+        mapContainer.innerHTML = `<svg viewBox="0 0 600 450" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;">${svgContent}</svg>`;
+    },
+
+    /**
+     * Build annotation callouts with leader lines for each cabinet.
+     * @param {Array} cabinets - Cabinet geometry array
+     * @returns {string} SVG markup for annotations
+     */
+    _buildAnnotations(cabinets) {
+        let svg = '';
+
+        cabinets.forEach(cab => {
+            const data = ROOM[cab.id];
+            if (!data || data.categories.length === 0) return;
+
+            const annotation = this.formatAnnotation(data);
+
+            // Position annotations based on wall location
+            let textX, textY, lineStartX, lineStartY, textAnchor;
+
+            if (cab.wall === 'left') {
+                // Annotations to the right of left-wall cabinets
+                lineStartX = cab.x + cab.w;
+                lineStartY = cab.y + cab.h / 2;
+                textX = cab.x + cab.w + 20;
+                textY = cab.y + cab.h / 2;
+                textAnchor = 'start';
+            } else if (cab.wall === 'right') {
+                // Annotations to the left of right-wall cabinets
+                lineStartX = cab.x;
+                lineStartY = cab.y + cab.h / 2;
+                textX = cab.x - 20;
+                textY = cab.y + cab.h / 2;
+                textAnchor = 'end';
+            } else {
+                // Back wall: annotations below
+                lineStartX = cab.x + cab.w / 2;
+                lineStartY = cab.y + cab.h;
+                textX = cab.x + cab.w / 2;
+                textY = cab.y + cab.h + 20;
+                textAnchor = 'middle';
+            }
+
+            // Leader line
+            svg += `<line class="poster-leader-line" x1="${lineStartX}" y1="${lineStartY}" x2="${textX}" y2="${textY}"/>`;
+
+            // Annotation text (name on first line, categories below)
+            svg += `<text class="poster-annotation-text" x="${textX}" y="${textY - 3}" text-anchor="${textAnchor}">${this._escapeHtml(data.name)}</text>`;
+            svg += `<text class="poster-annotation-cats" x="${textX}" y="${textY + 7}" text-anchor="${textAnchor}">${this._escapeHtml(data.categories.join(', '))}</text>`;
+        });
+
+        return svg;
+    },
+
+    /**
+     * Format annotation string for a cabinet.
+     * @param {Object} cabinet - Cabinet data { name, categories[] }
+     * @returns {string} "Cabinet Name: Cat1, Cat2, Cat3"
+     */
+    formatAnnotation(cabinet) {
+        if (!cabinet.categories || cabinet.categories.length === 0) {
+            return cabinet.name;
+        }
+        return cabinet.name + ': ' + cabinet.categories.join(', ');
+    },
+
+    /**
+     * Escape HTML special characters for SVG text content.
+     * @param {string} str
+     * @returns {string}
+     */
+    _escapeHtml(str) {
+        return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+};
+
+// Listen for afterprint to restore interactive view
+window.addEventListener('afterprint', () => {
+    const posterView = document.getElementById('posterView');
+    if (posterView.classList.contains('visible')) {
+        PrintPoster.close();
+    }
+});
 </script>
+
+<!-- Print Poster View (hidden by default, toggled via JavaScript) -->
+<div id="posterView">
+    <button class="poster-back-btn" onclick="PrintPoster.close()">← Back</button>
+    <div class="poster-header">
+        <div class="poster-title">Build Room #1 — Floor Map</div>
+        <div class="poster-subtitle">Scan the QR code to open the interactive map on your phone</div>
+    </div>
+    <div class="poster-qr">
+        <div class="poster-qr-container" id="posterQrContainer"></div>
+        <div class="poster-qr-label">Scan with phone camera</div>
+    </div>
+    <div class="poster-map" id="posterMapContainer"></div>
+</div>
+
 </body>
 </html>
