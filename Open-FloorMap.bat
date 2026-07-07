@@ -1,0 +1,3 @@
+@echo off
+echo Opening Engine Build Room #1 Floor Map...
+start "" "%~dp0index.html"

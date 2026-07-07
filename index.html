@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Build Room #1</title>
+    <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; overflow: hidden; }
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+        background: #0f0f0f;
+        color: #f0f0f0;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    /* === App Shell === */
+    .app {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        height: 100dvh;
+    }
+
+    /* === Top Bar === */
+    .topbar {
+        display: flex;
+        align-items: center;
+        padding: 12px 16px;
+        background: #161616;
+        border-bottom: 1px solid #222;
+        gap: 12px;
+        flex-shrink: 0;
+    }
+    .topbar-title {
+        font-size: 15px;
+        font-weight: 600;
+        letter-spacing: -0.2px;
+    }
+    .topbar-room {
+        font-size: 11px;
+        color: #888;
+        background: #222;
+        padding: 3px 8px;
+        border-radius: 4px;
+    }
+    .topbar-logo {
+        margin-left: auto;
+        font-size: 10px;
+        font-weight: 700;
+        color: #c00;
+        letter-spacing: 1px;
+    }
+
+    /* === Map View === */
+    .map-view {
+        flex: 1;
+        overflow: hidden;
+        position: relative;
+        touch-action: none;
+    }
+    .map-scroll {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 16px;
+    }
+    .map-svg {
+        width: 100%;
+        height: 100%;
+        max-width: 680px;
+        max-height: 520px;
+    }
+
+    /* === SVG Styles === */
+    .room-border {
+        fill: #161616;
+        stroke: #333;
+        stroke-width: 2;
+        rx: 6;
+    }
+    .cab {
+        fill: #1e1e1e;
+        stroke: #444;
+        stroke-width: 1.5;
+        rx: 4;
+        cursor: pointer;
+        transition: fill 0.15s, stroke 0.15s;
+    }
+    .cab:active { fill: #2a2a2a; }
+    .cab[data-status="organized"] { stroke: #2ecc71; }
+    .cab[data-status="pending"] { stroke: #555; }
+    .cab[data-status="empty"] { stroke: #333; stroke-dasharray: 4 3; fill: none; }
+    .cab.selected { fill: #1a2a1a; stroke: #2ecc71; stroke-width: 2.5; }
+    .cab.selected[data-status="pending"] { fill: #1a1a2a; stroke: #5dade2; stroke-width: 2.5; }
+    .cab.selected[data-status="empty"] { fill: #1a1a1a; stroke: #666; stroke-width: 2; }
+
+    .cab-text {
+        fill: #ddd;
+        font-size: 10px;
+        font-weight: 600;
+        text-anchor: middle;
+        dominant-baseline: middle;
+        pointer-events: none;
+    }
+    .cab-subtext {
+        fill: #777;
+        font-size: 8px;
+        text-anchor: middle;
+        dominant-baseline: middle;
+        pointer-events: none;
+    }
+    .fixture-rect {
+        fill: none;
+        stroke: #2a2a2a;
+        stroke-width: 1;
+    }
+    .fixture-text {
+        fill: #444;
+        font-size: 9px;
+        text-anchor: middle;
+        dominant-baseline: middle;
+    }
+    .door-line { stroke: #2ecc71; stroke-width: 3; stroke-linecap: round; }
+    .door-text {
+        fill: #2ecc71;
+        font-size: 8px;
+        font-weight: 600;
+        text-anchor: middle;
+        letter-spacing: 1px;
+    }
+    .wall-label {
+        fill: #333;
+        font-size: 7px;
+        text-anchor: middle;
+        letter-spacing: 0.5px;
+    }
+
+    /* === Bottom Sheet === */
+    .sheet-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.5);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.25s;
+        z-index: 10;
+    }
+    .sheet-backdrop.open { opacity: 1; pointer-events: auto; }
+
+    .sheet {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: #1a1a1a;
+        border-top-left-radius: 14px;
+        border-top-right-radius: 14px;
+        transform: translateY(100%);
+        transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+        z-index: 20;
+        max-height: 70vh;
+        max-height: 70dvh;
+        display: flex;
+        flex-direction: column;
+    }
+    .sheet.open { transform: translateY(0); }
+
+    .sheet-handle {
+        width: 36px;
+        height: 4px;
+        background: #444;
+        border-radius: 2px;
+        margin: 10px auto 0;
+        flex-shrink: 0;
+    }
+    .sheet-header {
+        padding: 14px 20px 10px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-shrink: 0;
+    }
+    .sheet-title {
+        font-size: 16px;
+        font-weight: 600;
+        flex: 1;
+    }
+    .sheet-status {
+        font-size: 10px;
+        padding: 3px 8px;
+        border-radius: 4px;
+        font-weight: 600;
+    }
+    .sheet-status.organized { background: #1a3a2a; color: #2ecc71; }
+    .sheet-status.pending { background: #1a2a3a; color: #5dade2; }
+    .sheet-status.empty { background: #222; color: #666; }
+
+    .sheet-location {
+        padding: 0 20px 12px;
+        font-size: 12px;
+        color: #666;
+    }
+    .sheet-body {
+        flex: 1;
+        overflow-y: auto;
+        padding: 0 20px 24px;
+        -webkit-overflow-scrolling: touch;
+    }
+    .section-title {
+        font-size: 11px;
+        font-weight: 600;
+        color: #888;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin: 16px 0 8px;
+    }
+    .section-title:first-child { margin-top: 0; }
+    .item-list { list-style: none; }
+    .item-list li {
+        padding: 8px 0;
+        font-size: 14px;
+        border-bottom: 1px solid #222;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .item-list li:last-child { border-bottom: none; }
+    .item-dot {
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        background: #444;
+        flex-shrink: 0;
+    }
+
+    /* === Desktop: Side Panel Instead of Sheet === */
+    @media (min-width: 769px) {
+        .app { flex-direction: row; }
+        .topbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 5;
+        }
+        .map-view { margin-top: 46px; }
+        .sheet-backdrop { display: none; }
+        .sheet {
+            position: relative;
+            transform: none;
+            width: 340px;
+            max-height: none;
+            height: calc(100% - 46px);
+            margin-top: 46px;
+            border-radius: 0;
+            border-left: 1px solid #222;
+            flex-shrink: 0;
+        }
+        .sheet.open { transform: none; }
+        .sheet-handle { display: none; }
+    }
+    </style>
+</head>
+<body>
+<div class="app">
+    <div class="topbar">
+        <span class="topbar-title">Build Room #1</span>
+        <span class="topbar-room">Floor Map</span>
+        <span class="topbar-logo">TENNECO</span>
+    </div>
+
+    <div class="map-view">
+        <div class="map-scroll">
+            <svg class="map-svg" viewBox="0 0 600 450" preserveAspectRatio="xMidYMid meet">
+                <!-- Room -->
+                <rect class="room-border" x="5" y="5" width="590" height="440"/>
+
+                <!-- Wall labels -->
+                <text class="wall-label" x="300" y="18">BACK WALL</text>
+                <text class="wall-label" x="300" y="438">FRONT (DOOR)</text>
+
+                <!-- Door -->
+                <line class="door-line" x1="260" y1="443" x2="340" y2="443"/>
+                <text class="door-text" x="300" y="432">DOOR</text>
+
+                <!-- LEFT WALL -->
+                <rect class="cab" data-id="cab1" data-status="organized" x="20" y="35" width="95" height="80"/>
+                <text class="cab-text" x="67" y="70">General</text>
+                <text class="cab-subtext" x="67" y="84">Tools</text>
+
+                <rect class="cab" data-id="cab2" data-status="pending" x="20" y="130" width="95" height="80"/>
+                <text class="cab-text" x="67" y="165">Sockets</text>
+                <text class="cab-subtext" x="67" y="179">& Drives</text>
+
+                <rect class="cab" data-id="cab3" data-status="pending" x="20" y="225" width="95" height="80"/>
+                <text class="cab-text" x="67" y="260">Torque</text>
+                <text class="cab-subtext" x="67" y="274">Tools</text>
+
+                <rect class="cab" data-id="cab4" data-status="empty" x="20" y="320" width="95" height="80"/>
+                <text class="cab-text" x="67" y="357">TBD</text>
+
+                <!-- BACK WALL -->
+                <rect class="cab" data-id="cab5" data-status="pending" x="145" y="35" width="120" height="65"/>
+                <text class="cab-text" x="205" y="62">Fluids</text>
+                <text class="cab-subtext" x="205" y="76">& Chemicals</text>
+
+                <rect class="cab" data-id="cab6" data-status="pending" x="290" y="35" width="120" height="65"/>
+                <text class="cab-text" x="350" y="62">Measurement</text>
+                <text class="cab-subtext" x="350" y="76">& Gauges</text>
+
+                <rect class="cab" data-id="cab7" data-status="empty" x="435" y="35" width="120" height="65"/>
+                <text class="cab-text" x="495" y="62">TBD</text>
+
+                <!-- RIGHT WALL -->
+                <rect class="cab" data-id="cab8" data-status="pending" x="485" y="130" width="95" height="80"/>
+                <text class="cab-text" x="532" y="165">Fasteners</text>
+                <text class="cab-subtext" x="532" y="179">& Hardware</text>
+
+                <rect class="cab" data-id="cab9" data-status="pending" x="485" y="225" width="95" height="80"/>
+                <text class="cab-text" x="532" y="260">Engine</text>
+                <text class="cab-subtext" x="532" y="274">Parts</text>
+
+                <rect class="cab" data-id="cab10" data-status="empty" x="485" y="320" width="95" height="80"/>
+                <text class="cab-text" x="532" y="357">TBD</text>
+
+                <!-- Workbench (center) -->
+                <rect class="fixture-rect" x="200" y="200" width="200" height="90" rx="3"/>
+                <text class="fixture-text" x="300" y="245">WORKBENCH</text>
+            </svg>
+        </div>
+    </div>
+
+    <div class="sheet-backdrop" id="backdrop"></div>
+    <div class="sheet" id="sheet">
+        <div class="sheet-handle"></div>
+        <div class="sheet-header">
+            <span class="sheet-title" id="sheetTitle">Select a cabinet</span>
+            <span class="sheet-status" id="sheetStatus"></span>
+        </div>
+        <div class="sheet-location" id="sheetLocation"></div>
+        <div class="sheet-body" id="sheetBody">
+            <p style="color:#666; font-size:13px; padding-top:20px; text-align:center;">Tap a cabinet on the map to see what's inside.</p>
+        </div>
+    </div>
+</div>
+
+<script>
+// ================================================================
+// ROOM DATA — Update this as you organize each cabinet
+// ================================================================
+const ROOM = {
+    cab1: {
+        name: "General Tools",
+        status: "organized",
+        location: "Left wall · Cabinet 1",
+        sections: [
+            { title: "Top Shelf", items: ["Hammers (ball peen, rubber mallet)", "Pry bars", "Punch set", "Chisels"] },
+            { title: "Middle Shelf", items: ["Screwdriver sets (Phillips, flat, Torx)", "Pliers (needle nose, channel lock, snap ring)", "Allen key sets (SAE & metric)"] },
+            { title: "Drawers", items: ["Socket set — 1/4\" drive", "Socket set — 3/8\" drive", "Socket set — 1/2\" drive", "Extensions & universals", "Ratchets"] },
+            { title: "Bottom", items: ["Adjustable wrenches", "Combo wrench sets", "Breaker bars"] }
+        ]
+    },
+    cab2: {
+        name: "Sockets & Drives",
+        status: "pending",
+        location: "Left wall · Cabinet 2",
+        sections: [
+            { title: "Contents (unsorted)", items: ["Deep sockets — various", "Impact sockets", "Specialty (E-Torx, spline)", "Adapters & reducers", "Crow foot wrenches"] }
+        ]
+    },
+    cab3: {
+        name: "Torque Tools",
+        status: "pending",
+        location: "Left wall · Cabinet 3",
+        sections: [
+            { title: "Contents (unsorted)", items: ["Torque wrenches (click)", "Torque wrenches (dial)", "Torque multiplier", "Calibration records", "Torque angle gauge"] }
+        ]
+    },
+    cab4: {
+        name: "Unmapped",
+        status: "empty",
+        location: "Left wall · Cabinet 4",
+        sections: [
+            { title: "Status", items: ["Not yet inventoried"] }
+        ]
+    },
+    cab5: {
+        name: "Fluids & Chemicals",
+        status: "pending",
+        location: "Back wall · Left section",
+        sections: [
+            { title: "Contents (unsorted)", items: ["Engine oils (various grades)", "Coolant", "Brake cleaner", "Penetrating oil", "Thread locker (blue/red)", "Silicone sealant", "Anti-seize"] }
+        ]
+    },
+    cab6: {
+        name: "Measurement & Gauges",
+        status: "pending",
+        location: "Back wall · Center section",
+        sections: [
+            { title: "Contents (unsorted)", items: ["Dial indicators", "Calipers (digital/dial)", "Micrometers", "Feeler gauges", "Bore gauges", "Magnetic bases"] }
+        ]
+    },
+    cab7: {
+        name: "Unmapped",
+        status: "empty",
+        location: "Back wall · Right section",
+        sections: [
+            { title: "Status", items: ["Not yet inventoried"] }
+        ]
+    },
+    cab8: {
+        name: "Fasteners & Hardware",
+        status: "pending",
+        location: "Right wall · Cabinet 1",
+        sections: [
+            { title: "Contents (unsorted)", items: ["Bolts (metric & SAE)", "Nuts & washers", "Hose clamps", "Cotter pins & clips", "O-rings (assorted)", "Gasket material"] }
+        ]
+    },
+    cab9: {
+        name: "Engine Parts",
+        status: "pending",
+        location: "Right wall · Cabinet 2",
+        sections: [
+            { title: "Contents (unsorted)", items: ["Spare sensors", "Gaskets (common)", "Belts", "Hoses & fittings", "Filters (oil, fuel, air)", "Plugs & caps"] }
+        ]
+    },
+    cab10: {
+        name: "Unmapped",
+        status: "empty",
+        location: "Right wall · Cabinet 3",
+        sections: [
+            { title: "Status", items: ["Not yet inventoried"] }
+        ]
+    }
+};
+
+// ================================================================
+// UI Logic
+// ================================================================
+const sheet = document.getElementById('sheet');
+const backdrop = document.getElementById('backdrop');
+const sheetTitle = document.getElementById('sheetTitle');
+const sheetStatus = document.getElementById('sheetStatus');
+const sheetLocation = document.getElementById('sheetLocation');
+const sheetBody = document.getElementById('sheetBody');
+const isMobile = () => window.innerWidth < 769;
+
+let selected = null;
+
+document.querySelectorAll('.cab').forEach(el => {
+    el.addEventListener('click', () => openCabinet(el.dataset.id));
+    el.addEventListener('touchend', (e) => { e.preventDefault(); openCabinet(el.dataset.id); });
+});
+
+backdrop.addEventListener('click', closeSheet);
+
+function openCabinet(id) {
+    const data = ROOM[id];
+    if (!data) return;
+
+    // Highlight
+    document.querySelectorAll('.cab').forEach(c => c.classList.remove('selected'));
+    document.querySelector(`[data-id="${id}"]`).classList.add('selected');
+    selected = id;
+
+    // Fill sheet
+    sheetTitle.textContent = data.name;
+    sheetLocation.textContent = data.location;
+
+    const statusLabels = { organized: 'Organized', pending: 'Pending', empty: 'Unmapped' };
+    sheetStatus.textContent = statusLabels[data.status];
+    sheetStatus.className = 'sheet-status ' + data.status;
+
+    let html = '';
+    data.sections.forEach(s => {
+        html += `<div class="section-title">${s.title}</div><ul class="item-list">`;
+        s.items.forEach(item => {
+            html += `<li><span class="item-dot"></span>${item}</li>`;
+        });
+        html += '</ul>';
+    });
+    sheetBody.innerHTML = html;
+
+    // Open sheet on mobile
+    if (isMobile()) {
+        sheet.classList.add('open');
+        backdrop.classList.add('open');
+    }
+}
+
+function closeSheet() {
+    if (isMobile()) {
+        sheet.classList.remove('open');
+        backdrop.classList.remove('open');
+    }
+}
+
+// Swipe down to close on mobile
+let touchStartY = 0;
+sheet.addEventListener('touchstart', e => { touchStartY = e.touches[0].clientY; });
+sheet.addEventListener('touchmove', e => {
+    const dy = e.touches[0].clientY - touchStartY;
+    if (dy > 80) closeSheet();
+});
+
+// On desktop, auto-show first organized cabinet
+if (!isMobile()) {
+    openCabinet('cab1');
+}
+</script>
+</body>
+</html>
