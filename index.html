@@ -27,16 +27,19 @@
     .topbar {
         display: flex;
         align-items: center;
-        padding: 12px 16px;
+        justify-content: space-between;
+        padding: 12px 18px;
         background: #161616;
         border-bottom: 1px solid #222;
-        gap: 12px;
+        gap: 14px;
         flex-shrink: 0;
     }
     .topbar-title {
-        font-size: 15px;
-        font-weight: 600;
-        letter-spacing: -0.2px;
+        flex: 1;
+        text-align: center;
+        font-size: 17px;
+        font-weight: 700;
+        letter-spacing: 1px;
     }
     .topbar-room {
         font-size: 11px;
@@ -46,14 +49,13 @@
         border-radius: 4px;
     }
     .topbar-logo {
-        margin-left: auto;
         display: flex;
         align-items: center;
+        flex-shrink: 0;
     }
     .topbar-logo img {
-        height: 32px;
-        min-height: 28px;
-        max-height: 40px;
+        height: 40px;
+        width: auto;
         display: block;
     }
     .topbar-logo-fallback {
@@ -103,7 +105,7 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        padding: 16px;
+        padding: 2px;
     }
     .map-svg {
         width: 100%;
@@ -163,10 +165,16 @@
         letter-spacing: 1px;
     }
     .wall-label {
-        fill: #333;
-        font-size: 7px;
+        fill: #9aa0a6;
+        font-size: 13px;
+        font-weight: 700;
         text-anchor: middle;
-        letter-spacing: 0.5px;
+        letter-spacing: 1.5px;
+    }
+    .window-line {
+        stroke: #6c7a8a;
+        stroke-width: 5;
+        stroke-linecap: round;
     }
 
     /* === Back Button Overlay === */
@@ -516,12 +524,11 @@
 <body>
 <div class="app">
     <div class="topbar">
-        <span class="topbar-title">Build Room #1</span>
-        <span class="topbar-room">Floor Map</span>
         <span class="topbar-logo">
-            <img src="tenneco-logo.png" alt="Tenneco" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+            <img src="tenneco-shark.png" alt="Tenneco" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
             <span class="topbar-logo-fallback">TENNECO</span>
         </span>
+        <span class="topbar-title">Build Room #1</span>
         <button class="topbar-print-btn" onclick="PrintPoster.generate()">Print Poster</button>
     </div>
 
@@ -532,29 +539,17 @@
                 <rect class="room-border" x="5" y="5" width="590" height="440"/>
 
                 <!-- Wall labels -->
-                <text class="wall-label" x="300" y="16">BACK WALL</text>
-                <text class="wall-label" x="300" y="440">FRONT (ENTRY)</text>
-                <text class="wall-label" x="14" y="228" transform="rotate(-90 14 228)">LEFT WALL</text>
-                <text class="wall-label" x="586" y="228" transform="rotate(90 586 228)">RIGHT WALL</text>
+                <text class="wall-label" x="300" y="18">BACK WALL</text>
+                <text class="wall-label" x="300" y="437">FRONT WALL</text>
+                <text class="wall-label" x="18" y="228" transform="rotate(-90 18 228)">LEFT WALL</text>
+                <text class="wall-label" x="582" y="228" transform="rotate(90 582 228)">RIGHT WALL</text>
 
-                <!-- Back-wall window (above the main workbench) -->
-                <line class="fixture-rect" x1="150" y1="7" x2="270" y2="7" style="stroke:#4a4a4a;stroke-width:3;"/>
-                <text class="fixture-text" x="210" y="20">WINDOW</text>
+                <!-- Back-wall window (right side) -->
+                <line class="window-line" x1="330" y1="7" x2="450" y2="7"/>
+                <text class="fixture-text" x="390" y="20">WINDOW</text>
 
-                <!-- Entry door (front wall) -->
-                <line class="door-line" x1="150" y1="443" x2="245" y2="443"/>
-                <text class="door-text" x="197" y="433">ENTRY</text>
-
-                <!-- Center floor fixtures (non-tappable) -->
-                <!-- Overhead chain hoist on I-beam -->
-                <line class="fixture-rect" x1="300" y1="120" x2="300" y2="260" style="stroke:#5a4a1a;stroke-width:4;stroke-dasharray:2 3;"/>
-                <circle cx="300" cy="200" r="7" fill="none" stroke="#7a6a2a" stroke-width="2"/>
-                <text class="fixture-text" x="300" y="278">CHAIN HOIST</text>
-
-                <!-- Rolling utility cart (mobile) -->
-                <rect class="fixture-rect" x="345" y="300" width="70" height="45" rx="3" style="stroke-dasharray:4 3;"/>
-                <text class="fixture-text" x="380" y="319">ROLLING</text>
-                <text class="fixture-text" x="380" y="331">CART</text>
+                <!-- Entry (double door, centered on front wall) -->
+                <line class="door-line" x1="230" y1="443" x2="370" y2="443"/>
 
                 <!-- Cabinet layer (rendered by JS from FIXTURES) -->
                 <g id="cabLayer"></g>
@@ -1475,24 +1470,17 @@ const PrintPoster = {
         svgContent += '<rect class="poster-room-border" x="5" y="5" width="590" height="440" rx="6"/>';
 
         // Wall labels
-        svgContent += '<text class="poster-wall-label" x="300" y="16">BACK WALL</text>';
-        svgContent += '<text class="poster-wall-label" x="300" y="440">FRONT (ENTRY)</text>';
+        svgContent += '<text class="poster-wall-label" x="300" y="18">BACK WALL</text>';
+        svgContent += '<text class="poster-wall-label" x="300" y="437">FRONT WALL</text>';
         svgContent += '<text class="poster-wall-label" x="14" y="228" transform="rotate(-90 14 228)">LEFT WALL</text>';
         svgContent += '<text class="poster-wall-label" x="586" y="228" transform="rotate(90 586 228)">RIGHT WALL</text>';
 
-        // Back-wall window
-        svgContent += '<line x1="150" y1="7" x2="270" y2="7" style="stroke:#000;stroke-width:3;"/>';
-        svgContent += '<text class="poster-fixture-text" x="210" y="20">WINDOW</text>';
+        // Back-wall window (right side)
+        svgContent += '<line x1="330" y1="7" x2="450" y2="7" style="stroke:#000;stroke-width:4;"/>';
+        svgContent += '<text class="poster-fixture-text" x="390" y="20">WINDOW</text>';
 
-        // Entry door
-        svgContent += '<line class="poster-door-line" x1="150" y1="443" x2="245" y2="443"/>';
-        svgContent += '<text class="poster-door-text" x="197" y="433">ENTRY</text>';
-
-        // Center fixtures (non-numbered)
-        svgContent += '<circle cx="300" cy="200" r="7" fill="none" stroke="#000" stroke-width="1.5"/>';
-        svgContent += '<text class="poster-fixture-text" x="300" y="222">CHAIN HOIST</text>';
-        svgContent += '<rect class="poster-fixture-rect" x="345" y="300" width="70" height="45" rx="3" style="stroke-dasharray:4 3;"/>';
-        svgContent += '<text class="poster-fixture-text" x="380" y="326">ROLLING CART</text>';
+        // Entry (double door, centered on front wall)
+        svgContent += '<line class="poster-door-line" x1="230" y1="443" x2="370" y2="443"/>';
 
         // Numbered cabinet rects + number badges
         FIXTURES.forEach((f, i) => {
