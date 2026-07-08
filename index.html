@@ -40,6 +40,9 @@
         font-size: 17px;
         font-weight: 700;
         letter-spacing: 1px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
     .topbar-room {
         font-size: 11px;
@@ -86,6 +89,14 @@
     .topbar-print-btn:active {
         background: #333;
     }
+    /* Tighten the top bar on phones so the title has room and doesn't wrap */
+    @media (max-width: 520px) {
+        .topbar { padding: 10px 12px; gap: 10px; }
+        .topbar-title { font-size: 16px; letter-spacing: 0.6px; }
+        .topbar-logo img { height: 34px; }
+        .topbar-logo-fallback { font-size: 17px; letter-spacing: 1.5px; line-height: 34px; }
+        .topbar-print-btn { padding: 8px 10px; font-size: 12px; min-width: 0; }
+    }
     @media print {
         .topbar-print-btn { display: none; }
         /* Requirement 1.9: @media print from interactive view shows normal interactive layout */
@@ -131,8 +142,8 @@
     .cab.selected { fill: #0d1b2a; stroke: #005BAC; stroke-width: 2.5; }
 
     .cab-text {
-        fill: #ddd;
-        font-size: 10px;
+        fill: #e6e6e6;
+        font-size: 13px;
         font-weight: 600;
         text-anchor: middle;
         dominant-baseline: middle;
@@ -534,22 +545,22 @@
 
     <div class="map-view">
         <div class="map-scroll">
-            <svg class="map-svg" viewBox="0 0 600 450" preserveAspectRatio="xMidYMid meet">
+            <svg class="map-svg" viewBox="0 0 600 900" preserveAspectRatio="xMidYMid meet">
                 <!-- Room outline -->
-                <rect class="room-border" x="5" y="5" width="590" height="440"/>
+                <rect class="room-border" x="5" y="5" width="590" height="890"/>
 
                 <!-- Wall labels -->
-                <text class="wall-label" x="300" y="18">BACK WALL</text>
-                <text class="wall-label" x="300" y="437">FRONT WALL</text>
-                <text class="wall-label" x="18" y="228" transform="rotate(-90 18 228)">LEFT WALL</text>
-                <text class="wall-label" x="582" y="228" transform="rotate(90 582 228)">RIGHT WALL</text>
+                <text class="wall-label" x="300" y="28">BACK WALL</text>
+                <text class="wall-label" x="300" y="884">FRONT WALL</text>
+                <text class="wall-label" x="22" y="450" transform="rotate(-90 22 450)">LEFT WALL</text>
+                <text class="wall-label" x="578" y="450" transform="rotate(90 578 450)">RIGHT WALL</text>
 
                 <!-- Back-wall window (right side) -->
                 <line class="window-line" x1="330" y1="7" x2="450" y2="7"/>
-                <text class="fixture-text" x="390" y="20">WINDOW</text>
+                <text class="fixture-text" x="390" y="26">WINDOW</text>
 
                 <!-- Entry (double door, centered on front wall) -->
-                <line class="door-line" x1="230" y1="443" x2="370" y2="443"/>
+                <line class="door-line" x1="230" y1="893" x2="370" y2="893"/>
 
                 <!-- Cabinet layer (rendered by JS from FIXTURES) -->
                 <g id="cabLayer"></g>
@@ -706,22 +717,22 @@ const ROOM = {
 // ================================================================
 const FIXTURES = [
     // LEFT WALL (top = back corner, bottom = front/entry corner)
-    { id: 'viseTable',      x: 18,  y: 40,  w: 92,  h: 52, wall: 'left' },
-    { id: 'craftsmanChest', x: 18,  y: 100, w: 92,  h: 56, wall: 'left' },
-    { id: 'leftBench',      x: 18,  y: 164, w: 92,  h: 56, wall: 'left' },
-    { id: 'pullerCab',      x: 18,  y: 228, w: 92,  h: 56, wall: 'left' },
-    { id: 'waterlooChest',  x: 18,  y: 292, w: 92,  h: 56, wall: 'left' },
-    { id: 'lockCab',        x: 18,  y: 356, w: 92,  h: 52, wall: 'left' },
+    { id: 'viseTable',      x: 18,  y: 70,  w: 96,  h: 116, wall: 'left' },
+    { id: 'craftsmanChest', x: 18,  y: 198, w: 96,  h: 116, wall: 'left' },
+    { id: 'leftBench',      x: 18,  y: 326, w: 96,  h: 116, wall: 'left' },
+    { id: 'pullerCab',      x: 18,  y: 454, w: 96,  h: 116, wall: 'left' },
+    { id: 'waterlooChest',  x: 18,  y: 582, w: 96,  h: 116, wall: 'left' },
+    { id: 'lockCab',        x: 18,  y: 710, w: 96,  h: 116, wall: 'left' },
 
     // BACK WALL (left -> right along the top)
-    { id: 'workbench',      x: 130, y: 28,  w: 195, h: 62, wall: 'back' },
-    { id: 'arborPress',     x: 335, y: 28,  w: 62,  h: 62, wall: 'back' },
-    { id: 'cornerCab',      x: 407, y: 28,  w: 72,  h: 62, wall: 'back' },
+    { id: 'workbench',      x: 135, y: 40,  w: 200, h: 90,  wall: 'back' },
+    { id: 'arborPress',     x: 345, y: 40,  w: 66,  h: 90,  wall: 'back' },
+    { id: 'cornerCab',      x: 420, y: 40,  w: 66,  h: 90,  wall: 'back' },
 
     // RIGHT WALL (top = back corner, bottom = front/entry corner)
-    { id: 'measCab',        x: 490, y: 108, w: 92,  h: 72, wall: 'right' },
-    { id: 'cumminsCab',     x: 490, y: 190, w: 92,  h: 72, wall: 'right' },
-    { id: 'redRoller',      x: 490, y: 300, w: 92,  h: 72, wall: 'right' }
+    { id: 'measCab',        x: 486, y: 150, w: 96,  h: 150, wall: 'right' },
+    { id: 'cumminsCab',     x: 486, y: 320, w: 96,  h: 150, wall: 'right' },
+    { id: 'redRoller',      x: 486, y: 640, w: 96,  h: 150, wall: 'right' }
 ];
 
 // ================================================================
@@ -729,10 +740,10 @@ const FIXTURES = [
 // ================================================================
 const ViewBoxController = {
     /** Full room viewBox (default state) */
-    FULL_VIEW: { x: 0, y: 0, w: 600, h: 450 },
+    FULL_VIEW: { x: 0, y: 0, w: 600, h: 900 },
 
     /** Current viewBox state */
-    current: { x: 0, y: 0, w: 600, h: 450 },
+    current: { x: 0, y: 0, w: 600, h: 900 },
 
     /** Whether currently zoomed in */
     isZoomed: false,
@@ -874,8 +885,8 @@ const ViewBoxController = {
         let viewW = bboxW + padX * 2;
         let viewH = bboxH + padY * 2;
 
-        // Maintain the room aspect ratio (4:3 = 600:450)
-        const aspect = 600 / 450;
+        // Maintain the room aspect ratio (2:3 = 600:900)
+        const aspect = 600 / 900;
         if (viewW / viewH > aspect) {
             viewH = viewW / aspect;
         } else {
@@ -891,11 +902,11 @@ const ViewBoxController = {
 
         // Clamp to room boundaries
         viewX = Math.max(0, Math.min(viewX, 600 - viewW));
-        viewY = Math.max(0, Math.min(viewY, 450 - viewH));
+        viewY = Math.max(0, Math.min(viewY, 900 - viewH));
 
         // Ensure view dimensions don't exceed room
         viewW = Math.min(viewW, 600);
-        viewH = Math.min(viewH, 450);
+        viewH = Math.min(viewH, 900);
 
         return { x: viewX, y: viewY, w: viewW, h: viewH };
     },
@@ -909,9 +920,9 @@ const ViewBoxController = {
         let newX = this.current.x + dx;
         let newY = this.current.y + dy;
 
-        // Clamp: x >= 0, y >= 0, x+w <= 600, y+h <= 450
+        // Clamp: x >= 0, y >= 0, x+w <= 600, y+h <= 900
         newX = Math.max(0, Math.min(newX, 600 - this.current.w));
-        newY = Math.max(0, Math.min(newY, 450 - this.current.h));
+        newY = Math.max(0, Math.min(newY, 900 - this.current.h));
 
         this.current.x = newX;
         this.current.y = newY;
@@ -1341,7 +1352,7 @@ function renderCabs() {
         const cx = f.x + f.w / 2;
         const cy = f.y + f.h / 2;
         const lines = wrapLabel(data.name);
-        const lineH = 11;
+        const lineH = 14;
         const startY = cy - ((lines.length - 1) * lineH) / 2;
         lines.forEach((line, i) => {
             const t = document.createElementNS(SVG_NS, 'text');
@@ -1377,9 +1388,9 @@ window.addEventListener('resize', () => {
         // In Zoom_View: re-clamp the current viewBox to room bounds
         let { x, y, w, h } = ViewBoxController.current;
         x = Math.max(0, Math.min(x, 600 - w));
-        y = Math.max(0, Math.min(y, 450 - h));
+        y = Math.max(0, Math.min(y, 900 - h));
         w = Math.min(w, 600);
-        h = Math.min(h, 450);
+        h = Math.min(h, 900);
         ViewBoxController.current = { x, y, w, h };
         ViewBoxController._applyViewBox();
     }
@@ -1467,20 +1478,20 @@ const PrintPoster = {
         let svgContent = '';
 
         // Room border
-        svgContent += '<rect class="poster-room-border" x="5" y="5" width="590" height="440" rx="6"/>';
+        svgContent += '<rect class="poster-room-border" x="5" y="5" width="590" height="890" rx="6"/>';
 
         // Wall labels
-        svgContent += '<text class="poster-wall-label" x="300" y="18">BACK WALL</text>';
-        svgContent += '<text class="poster-wall-label" x="300" y="437">FRONT WALL</text>';
-        svgContent += '<text class="poster-wall-label" x="14" y="228" transform="rotate(-90 14 228)">LEFT WALL</text>';
-        svgContent += '<text class="poster-wall-label" x="586" y="228" transform="rotate(90 586 228)">RIGHT WALL</text>';
+        svgContent += '<text class="poster-wall-label" x="300" y="28">BACK WALL</text>';
+        svgContent += '<text class="poster-wall-label" x="300" y="884">FRONT WALL</text>';
+        svgContent += '<text class="poster-wall-label" x="18" y="450" transform="rotate(-90 18 450)">LEFT WALL</text>';
+        svgContent += '<text class="poster-wall-label" x="582" y="450" transform="rotate(90 582 450)">RIGHT WALL</text>';
 
         // Back-wall window (right side)
         svgContent += '<line x1="330" y1="7" x2="450" y2="7" style="stroke:#000;stroke-width:4;"/>';
-        svgContent += '<text class="poster-fixture-text" x="390" y="20">WINDOW</text>';
+        svgContent += '<text class="poster-fixture-text" x="390" y="26">WINDOW</text>';
 
         // Entry (double door, centered on front wall)
-        svgContent += '<line class="poster-door-line" x1="230" y1="443" x2="370" y2="443"/>';
+        svgContent += '<line class="poster-door-line" x1="230" y1="893" x2="370" y2="893"/>';
 
         // Numbered cabinet rects + number badges
         FIXTURES.forEach((f, i) => {
@@ -1492,7 +1503,7 @@ const PrintPoster = {
             svgContent += `<text x="${cx}" y="${cy}" text-anchor="middle" dominant-baseline="central" fill="#fff" font-size="12" font-weight="700">${n}</text>`;
         });
 
-        mapContainer.innerHTML = `<svg viewBox="0 0 600 450" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;">${svgContent}</svg>`;
+        mapContainer.innerHTML = `<svg viewBox="0 0 600 900" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;max-height:8.5in;">${svgContent}</svg>`;
     },
 
     /**
