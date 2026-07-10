@@ -522,6 +522,165 @@
         size: letter portrait;
         margin: 0.5in;
     }
+    /* === Full-screen Station Detail View === */
+    .detail-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 200;
+        background: #050505;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.25s ease;
+    }
+    .detail-overlay.open {
+        opacity: 1;
+        pointer-events: auto;
+    }
+    .detail-close {
+        position: absolute;
+        top: 14px;
+        right: 14px;
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background: #1a1a1a;
+        border: 1px solid #333;
+        color: #fff;
+        font-size: 18px;
+        cursor: pointer;
+        z-index: 3;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .detail-close:active { background: #2a2a2a; }
+
+    /* The stage holds the big animated rectangle */
+    .detail-stage {
+        flex: 1 1 auto;
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 56px 20px 12px;
+        min-height: 0;
+    }
+    .detail-box {
+        width: min(88vw, 460px);
+        height: min(38vh, 260px);
+        border: 3px solid #005BAC;
+        border-radius: 12px;
+        background: #0d1b2a;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        padding: 20px;
+        transform-origin: center center;
+        box-shadow: 0 0 40px rgba(0,91,172,0.25);
+    }
+    .detail-box-name {
+        font-size: 26px;
+        font-weight: 700;
+        color: #fff;
+        text-align: center;
+        line-height: 1.2;
+        letter-spacing: 0.3px;
+    }
+    .detail-box-status {
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        padding: 4px 12px;
+        border-radius: 20px;
+    }
+    .detail-box-status.open   { background: #14351f; color: #5fd08a; }
+    .detail-box-status.closed { background: #0a2740; color: #4a9eff; }
+
+    /* Zoom-in animation (standard) and rotate-in (for sideways stations) */
+    @keyframes detailZoomIn {
+        from { transform: scale(0.55); opacity: 0; }
+        to   { transform: scale(1);    opacity: 1; }
+    }
+    @keyframes detailRotateIn {
+        from { transform: rotate(-90deg) scale(0.5); opacity: 0; }
+        to   { transform: rotate(0deg)   scale(1);   opacity: 1; }
+    }
+    .detail-box.anim            { animation: detailZoomIn 0.42s cubic-bezier(0.22,1,0.36,1) both; }
+    .detail-box.anim.was-vertical { animation: detailRotateIn 0.55s cubic-bezier(0.22,1,0.36,1) both; }
+
+    /* Inventory panel */
+    .detail-panel {
+        flex: 0 0 auto;
+        width: 100%;
+        max-width: 560px;
+        padding: 12px 22px 20px;
+        overflow-y: auto;
+        max-height: 46vh;
+        -webkit-overflow-scrolling: touch;
+    }
+    .detail-panel-head {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        margin-bottom: 10px;
+    }
+    .detail-title { font-size: 18px; font-weight: 700; color: #fff; }
+    .detail-location { font-size: 12px; color: #888; }
+    .detail-inv-label {
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: #666;
+        border-bottom: 1px solid #222;
+        padding-bottom: 6px;
+        margin-bottom: 6px;
+    }
+    .detail-list { list-style: none; }
+    .detail-list li {
+        padding: 11px 4px;
+        font-size: 15px;
+        color: #eaeaea;
+        border-bottom: 1px solid #1c1c1c;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .detail-list li:before {
+        content: "";
+        width: 6px; height: 6px;
+        border-radius: 50%;
+        background: #005BAC;
+        flex-shrink: 0;
+    }
+    .detail-list li.empty {
+        color: #777;
+        font-style: italic;
+        justify-content: center;
+    }
+    .detail-list li.empty:before { display: none; }
+    .detail-hint {
+        flex-shrink: 0;
+        padding: 6px 0 14px;
+        font-size: 11px;
+        color: #555;
+    }
+
+    /* Desktop: rectangle left, inventory right */
+    @media (min-width: 769px) {
+        .detail-overlay { flex-direction: row; flex-wrap: wrap; align-content: center; justify-content: center; gap: 30px; }
+        .detail-stage { flex: 0 0 auto; width: auto; padding: 20px; }
+        .detail-box { width: 380px; height: 300px; }
+        .detail-panel { width: 360px; max-height: 70vh; }
+        .detail-hint { position: absolute; bottom: 16px; }
+    }
+
     </style>
 </head>
 <body>
@@ -679,29 +838,38 @@ const ROOM = {
 //
 // ALL "Cabinet (Closed)" items use identical size: CAB_W x CAB_H
 // ================================================================
-const CAB_W = 100, CAB_H = 55; // Uniform cabinet dimensions
+const CAB_W = 100, CAB_H = 55;  // Horizontal cabinets (back/front walls)
+const VCAB_W = 62, VCAB_H = 110; // Vertical cabinets (side walls, sideways text)
 
-// Room interior: x 80..620, y 50..470.
-// Vertical bands (no overlaps):
-//   Back row:   y 62..122
-//   Middle:     y 150..360  (left workbench + right cabinets)
-//   Front row:  y 400..455
+// Per-station metadata: inventory status + whether the map label reads sideways.
+const META = {
+    pegBench:      { status: 'open' },
+    openBench:     { status: 'open' },
+    backCab:       { status: 'closed' },
+    leftWorkbench: { status: 'closed', sideways: true },
+    rightCabUpper: { status: 'closed', sideways: true },
+    rightCabLower: { status: 'closed', sideways: true },
+    frontCab:      { status: 'closed' },
+    toolBox:       { status: 'closed' }
+};
+
+// Room border: x=80, y=50, w=540, h=420. Interior x 80..620, y 50..470.
 const FIXTURES = [
-    // BACK WALL (left -> right, across the top)
+    // BACK WALL (left -> right, across the top) — horizontal
     { id: 'pegBench',        x: 95,  y: 62,  w: 175, h: 60, wall: 'back' },
     { id: 'openBench',       x: 285, y: 62,  w: 155, h: 60, wall: 'back' },
     { id: 'backCab',         x: 500, y: 62,  w: CAB_W, h: CAB_H, wall: 'back' },
 
-    // LEFT WALL (single tall workbench — stops well above the front cabinet)
+    // LEFT WALL (single tall workbench — vertical text)
     { id: 'leftWorkbench',   x: 95,  y: 150, w: 62,  h: 210, wall: 'left' },
 
-    // RIGHT WALL (two cabinets stacked, uniform size)
-    { id: 'rightCabUpper',   x: 500, y: 150, w: CAB_W, h: CAB_H, wall: 'right' },
-    { id: 'rightCabLower',   x: 500, y: 245, w: CAB_W, h: CAB_H, wall: 'right' },
+    // RIGHT WALL (two vertical cabinets, sideways text — matches sketch)
+    { id: 'rightCabUpper',   x: 523, y: 150, w: VCAB_W, h: VCAB_H, wall: 'right' },
+    { id: 'rightCabLower',   x: 523, y: 275, w: VCAB_W, h: VCAB_H, wall: 'right' },
 
     // FRONT WALL (bottom row, clear gap for the centered double door)
-    { id: 'frontCab',        x: 110, y: 400, w: CAB_W, h: CAB_H, wall: 'front' },
-    { id: 'toolBox',         x: 420, y: 400, w: CAB_W, h: CAB_H, wall: 'front' }
+    { id: 'frontCab',        x: 110, y: 405, w: CAB_W, h: CAB_H, wall: 'front' },
+    { id: 'toolBox',         x: 410, y: 405, w: CAB_W, h: CAB_H, wall: 'front' }
 ];
 
 // ================================================================
@@ -999,6 +1167,90 @@ sheet.addEventListener('touchcancel', () => { sheetTouchActive = false; });
 function updateBackButton() {}
 
 // ================================================================
+// Full-screen Station Detail View
+// ================================================================
+const detailOverlay   = document.getElementById('detailOverlay');
+const detailBox       = document.getElementById('detailBox');
+const detailBoxName   = document.getElementById('detailBoxName');
+const detailBoxStatus = document.getElementById('detailBoxStatus');
+const detailTitle     = document.getElementById('detailTitle');
+const detailLocation  = document.getElementById('detailLocation');
+const detailList      = document.getElementById('detailList');
+const detailClose     = document.getElementById('detailClose');
+
+/**
+ * Open the full-screen detail view for a station. Zooms in (or rotates in
+ * for sideways stations) to fill the screen with the station's box, name,
+ * and inventory list.
+ * @param {string} id - Station id (key in ROOM/META)
+ */
+function openDetail(id) {
+    const data = ROOM[id];
+    if (!data) return;
+    const meta = META[id] || {};
+    const status = meta.status || 'closed';
+
+    // Box name + status badge
+    detailBoxName.textContent = data.name;
+    detailBoxStatus.textContent = status === 'open' ? 'OPEN' : 'CLOSED';
+    detailBoxStatus.className = 'detail-box-status ' + status;
+
+    // Panel header
+    detailTitle.textContent = data.name;
+    detailLocation.textContent = data.location || '';
+
+    // Inventory list
+    if (!data.categories || data.categories.length === 0) {
+        detailList.innerHTML = '<li class="empty">Open — nothing stored here</li>';
+    } else {
+        detailList.innerHTML = data.categories
+            .map(c => `<li>${c.replace(/</g, '&lt;')}</li>`)
+            .join('');
+    }
+
+    // Orientation: sideways stations rotate upright as they zoom in
+    detailBox.classList.toggle('was-vertical', !!meta.sideways);
+
+    // Show overlay and (re)trigger the entrance animation
+    detailOverlay.classList.add('open');
+    detailBox.classList.remove('anim');
+    void detailBox.offsetWidth; // force reflow so the animation restarts
+    detailBox.classList.add('anim');
+}
+
+function closeDetail() {
+    detailOverlay.classList.remove('open');
+}
+
+detailClose.addEventListener('click', closeDetail);
+
+// Click on empty overlay area (not the box or panel) closes it
+detailOverlay.addEventListener('click', (e) => {
+    if (e.target === detailOverlay || e.target.classList.contains('detail-stage')) {
+        closeDetail();
+    }
+});
+
+// Escape key closes (desktop)
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && detailOverlay.classList.contains('open')) closeDetail();
+});
+
+// Swipe down to close (mobile)
+let detailTouchY = null;
+detailOverlay.addEventListener('touchstart', (e) => {
+    detailTouchY = e.touches[0].clientY;
+}, { passive: true });
+detailOverlay.addEventListener('touchmove', (e) => {
+    if (detailTouchY === null) return;
+    if (e.touches[0].clientY - detailTouchY > 80) {
+        closeDetail();
+        detailTouchY = null;
+    }
+}, { passive: true });
+detailOverlay.addEventListener('touchend', () => { detailTouchY = null; });
+
+// ================================================================
 // Gesture Handler — Unified Pointer Events for touch + mouse
 // ================================================================
 const GestureHandler = {
@@ -1208,77 +1460,14 @@ const GestureHandler = {
      */
     _handleTap(e) {
         const cabinetId = this.hitTest(e);
-
-        if (!ViewBoxController.isZoomed) {
-            // Full_View: tap cabinet → zoom to it
-            if (cabinetId) {
-                const target = ViewBoxController.computeZoomTarget(cabinetId);
-                ViewBoxController.isZoomed = true;
-                ViewBoxController.animateTo(target);
-                openCabinet(cabinetId);
-                updateBackButton();
-            }
-        } else {
-            // Zoom_View
-            if (cabinetId) {
-                if (cabinetId === selected) {
-                    // Tap same cabinet — re-open panel if it was dismissed
-                    if (isMobile() && !sheet.classList.contains('open')) {
-                        sheet.classList.add('open');
-                        backdrop.classList.add('open');
-                    }
-                    return;
-                }
-                // Tap different cabinet → re-target zoom (requirement 2.8)
-                const target = ViewBoxController.computeZoomTarget(cabinetId);
-                ViewBoxController.animateTo(target);
-                openCabinet(cabinetId);
-            } else {
-                // Tap empty space → return to full view
-                ViewBoxController.resetToFull().then(updateBackButton);
-                closeSheet();
-                document.querySelectorAll('.cab').forEach(c => c.classList.remove('selected'));
-                selected = null;
-                updateBackButton();
-            }
+        // New model: tapping a station opens the full-screen detail view.
+        if (cabinetId) {
+            openDetail(cabinetId);
         }
     },
 
-    /**
-     * Handle scroll-wheel zoom for desktop.
-     * Scroll down (positive deltaY) on a cabinet → zoom to it.
-     * Scroll up (negative deltaY) while zoomed → return to full view.
-     * @param {WheelEvent} e
-     */
-    _onWheel(e) {
-        e.preventDefault();
-
-        if (e.deltaY > 0 && !ViewBoxController.isZoomed) {
-            // Scroll down → zoom into cabinet under cursor
-            const elements = document.elementsFromPoint(e.clientX, e.clientY);
-            let cabinetId = null;
-            for (const el of elements) {
-                if (el.classList && el.classList.contains('cab')) {
-                    cabinetId = el.getAttribute('data-id');
-                    break;
-                }
-            }
-            if (cabinetId) {
-                const target = ViewBoxController.computeZoomTarget(cabinetId);
-                ViewBoxController.isZoomed = true;
-                ViewBoxController.animateTo(target);
-                openCabinet(cabinetId);
-                updateBackButton();
-            }
-        } else if (e.deltaY < 0 && ViewBoxController.isZoomed) {
-            // Scroll up → return to full view
-            ViewBoxController.resetToFull().then(updateBackButton);
-            closeSheet();
-            document.querySelectorAll('.cab').forEach(c => c.classList.remove('selected'));
-            selected = null;
-            updateBackButton();
-        }
-    }
+    /** Scroll-wheel is a no-op in the full-screen-detail model. */
+    _onWheel(e) { /* intentionally inert */ }
 };
 
 // ================================================================
@@ -1358,6 +1547,23 @@ function renderCabs() {
             pullLabel.setAttribute('fill', '#4a9eff');
             pullLabel.textContent = 'PULL SET';
             layer.appendChild(pullLabel);
+        } else if (f.wall === 'right') {
+            // Right-wall cabinets: sideways (vertical) text like the sketch
+            const columns = [
+                { text: 'Cabinet',  dx: -6, size: '10' },
+                { text: '(closed)', dx: 9,  size: '8' }
+            ];
+            columns.forEach(col => {
+                const lx = cx + col.dx;
+                const t = document.createElementNS(SVG_NS, 'text');
+                t.setAttribute('class', 'cab-text');
+                t.setAttribute('x', lx);
+                t.setAttribute('y', cy);
+                t.setAttribute('transform', `rotate(-90 ${lx} ${cy})`);
+                t.setAttribute('font-size', col.size);
+                t.textContent = col.text;
+                layer.appendChild(t);
+            });
         } else {
             // Standard horizontal labels
             const lines = wrapLabel(data.name);
@@ -1569,6 +1775,26 @@ window.addEventListener('afterprint', () => {
     }
 });
 </script>
+
+<!-- Full-screen station detail view (opens on tap) -->
+<div id="detailOverlay" class="detail-overlay" role="dialog" aria-modal="true">
+    <button class="detail-close" id="detailClose" aria-label="Close">✕</button>
+    <div class="detail-stage">
+        <div class="detail-box" id="detailBox">
+            <span class="detail-box-name" id="detailBoxName"></span>
+            <span class="detail-box-status" id="detailBoxStatus"></span>
+        </div>
+    </div>
+    <div class="detail-panel">
+        <div class="detail-panel-head">
+            <span id="detailTitle" class="detail-title"></span>
+            <span id="detailLocation" class="detail-location"></span>
+        </div>
+        <div class="detail-inv-label">Inventory</div>
+        <ul class="detail-list" id="detailList"></ul>
+    </div>
+    <div class="detail-hint">Swipe down or tap ✕ to close</div>
+</div>
 
 <!-- Print Poster View (hidden by default, toggled via JavaScript) -->
 <div id="posterView">
