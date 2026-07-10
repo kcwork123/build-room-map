@@ -743,6 +743,26 @@
     </div>
 </div>
 
+<!-- Full-screen station detail view (opens on tap) -->
+<div id="detailOverlay" class="detail-overlay" role="dialog" aria-modal="true">
+    <button class="detail-close" id="detailClose" aria-label="Close">✕</button>
+    <div class="detail-stage">
+        <div class="detail-box" id="detailBox">
+            <span class="detail-box-name" id="detailBoxName"></span>
+            <span class="detail-box-status" id="detailBoxStatus"></span>
+        </div>
+    </div>
+    <div class="detail-panel">
+        <div class="detail-panel-head">
+            <span id="detailTitle" class="detail-title"></span>
+            <span id="detailLocation" class="detail-location"></span>
+        </div>
+        <div class="detail-inv-label">Inventory</div>
+        <ul class="detail-list" id="detailList"></ul>
+    </div>
+    <div class="detail-hint">Swipe down or tap ✕ to close</div>
+</div>
+
 <script>
 // ================================================================
 // ROOM DATA — Flat cabinet model: { name, location, categories[] }
@@ -1775,26 +1795,6 @@ window.addEventListener('afterprint', () => {
     }
 });
 </script>
-
-<!-- Full-screen station detail view (opens on tap) -->
-<div id="detailOverlay" class="detail-overlay" role="dialog" aria-modal="true">
-    <button class="detail-close" id="detailClose" aria-label="Close">✕</button>
-    <div class="detail-stage">
-        <div class="detail-box" id="detailBox">
-            <span class="detail-box-name" id="detailBoxName"></span>
-            <span class="detail-box-status" id="detailBoxStatus"></span>
-        </div>
-    </div>
-    <div class="detail-panel">
-        <div class="detail-panel-head">
-            <span id="detailTitle" class="detail-title"></span>
-            <span id="detailLocation" class="detail-location"></span>
-        </div>
-        <div class="detail-inv-label">Inventory</div>
-        <ul class="detail-list" id="detailList"></ul>
-    </div>
-    <div class="detail-hint">Swipe down or tap ✕ to close</div>
-</div>
 
 <!-- Print Poster View (hidden by default, toggled via JavaScript) -->
 <div id="posterView">
