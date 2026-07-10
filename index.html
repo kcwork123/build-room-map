@@ -537,23 +537,33 @@
 
     <div class="map-view">
         <div class="map-scroll">
-            <svg class="map-svg" viewBox="0 0 600 450" preserveAspectRatio="xMidYMid meet">
-                <!-- Room outline -->
-                <rect class="room-border" x="5" y="5" width="590" height="440"/>
+            <svg class="map-svg" viewBox="0 0 700 550" preserveAspectRatio="xMidYMid meet">
+                <!-- 
+                    Layout grid:
+                    - ViewBox: 700 x 550
+                    - Room border inset: starts at (80,50) with size 540x420
+                    - Wall labels sit OUTSIDE the room border
+                    - All fixtures must stay within (82,52) to (618,468)
+                -->
 
-                <!-- Wall labels -->
-                <text class="wall-label" x="300" y="20">BACK WALL</text>
-                <text class="wall-label" x="300" y="436">FRONT WALL</text>
-                <text class="wall-label" x="16" y="225" transform="rotate(-90 16 225)">LEFT WALL</text>
-                <text class="wall-label" x="584" y="225" transform="rotate(90 584 225)">RIGHT WALL</text>
+                <!-- EXTERNAL Wall Labels (outside the room border) -->
+                <text class="wall-label" x="350" y="38">BACK WALL</text>
+                <text class="wall-label" x="350" y="492">FRONT WALL</text>
+                <text class="wall-label" x="52" y="260" transform="rotate(-90 52 260)">LEFT WALL</text>
+                <text class="wall-label" x="648" y="260" transform="rotate(90 648 260)">RIGHT WALL</text>
 
-                <!-- Window (back wall, spans over Open Workbench area) -->
-                <line class="window-line" x1="235" y1="7" x2="400" y2="7"/>
-                <text class="fixture-text" x="317" y="20">WINDOW</text>
+                <!-- Room border (the main rectangle) -->
+                <rect class="room-border" x="80" y="50" width="540" height="420"/>
 
-                <!-- Entry (double door, centered on front wall with gap in wall) -->
-                <line class="door-line" x1="230" y1="443" x2="370" y2="443"/>
-                <rect x="228" y="440" width="144" height="5" fill="#000000"/>
+                <!-- Window indicator (back wall, over Open Workbench area) -->
+                <line class="window-line" x1="310" y1="50" x2="460" y2="50"/>
+                <text class="fixture-text" x="385" y="44">WINDOW</text>
+
+                <!-- Double door entry (front wall, centered, with visual gap) -->
+                <rect x="80" y="468" width="540" height="2" fill="#333"/>
+                <rect x="275" y="466" width="150" height="8" fill="#000000"/>
+                <line class="door-line" x1="280" y1="470" x2="420" y2="470"/>
+                <text class="fixture-text" x="350" y="485">DOUBLE DOOR</text>
 
                 <!-- Cabinet layer (rendered by JS from FIXTURES) -->
                 <g id="cabLayer"></g>
@@ -664,29 +674,30 @@ const ROOM = {
 // ================================================================
 // FIXTURES — Single source of truth for cabinet geometry.
 // Drives BOTH the interactive SVG and the print poster.
-// ViewBox: 600 x 450 (landscape). Back = top, Front = bottom.
 //
-// IMPORTANT: All "Cabinet (Closed)" items use identical size: 100w x 55h
-// to match the sketch note that cabinets are all the same size.
+// Room border: x=80, y=50, w=540, h=420
+// Safe interior: (90, 60) to (610, 460) — 10px padding from border
+//
+// ALL "Cabinet (Closed)" items use identical size: CAB_W x CAB_H
 // ================================================================
 const CAB_W = 100, CAB_H = 55; // Uniform cabinet dimensions
 
 const FIXTURES = [
-    // BACK WALL (left -> right along the top)
-    { id: 'pegBench',        x: 30,  y: 25,  w: 190, h: 55, wall: 'back' },
-    { id: 'openBench',       x: 230, y: 25,  w: 170, h: 55, wall: 'back' },
-    { id: 'backCab',         x: 410, y: 25,  w: CAB_W, h: CAB_H, wall: 'back' },
+    // BACK WALL (left -> right, hugging the top border inside)
+    { id: 'pegBench',        x: 90,  y: 60,  w: 180, h: 55, wall: 'back' },
+    { id: 'openBench',       x: 280, y: 60,  w: 160, h: 55, wall: 'back' },
+    { id: 'backCab',         x: 500, y: 60,  w: CAB_W, h: CAB_H, wall: 'back' },
 
-    // LEFT WALL (single consolidated workbench spanning most of the wall)
-    { id: 'leftWorkbench',   x: 20,  y: 100, w: 70,  h: 280, wall: 'left' },
+    // LEFT WALL (single tall workbench, hugging left border inside)
+    { id: 'leftWorkbench',   x: 90,  y: 135, w: 60,  h: 280, wall: 'left' },
 
-    // RIGHT WALL (top/back -> bottom/front) — uniform cabinet size
-    { id: 'rightCabUpper',   x: 500, y: 115, w: CAB_W, h: CAB_H, wall: 'right' },
-    { id: 'rightCabLower',   x: 500, y: 220, w: CAB_W, h: CAB_H, wall: 'right' },
+    // RIGHT WALL (two cabinets, hugging right border inside)
+    { id: 'rightCabUpper',   x: 510, y: 145, w: CAB_W, h: CAB_H, wall: 'right' },
+    { id: 'rightCabLower',   x: 510, y: 260, w: CAB_W, h: CAB_H, wall: 'right' },
 
-    // FRONT AREA (bottom) — cabinet same size, tool box slightly wider
-    { id: 'frontCab',        x: 60,  y: 370, w: CAB_W + 50, h: CAB_H, wall: 'front' },
-    { id: 'toolBox',         x: 390, y: 370, w: 130, h: CAB_H, wall: 'front' }
+    // FRONT AREA (bottom, inside room)
+    { id: 'frontCab',        x: 100, y: 395, w: CAB_W + 40, h: CAB_H, wall: 'front' },
+    { id: 'toolBox',         x: 440, y: 395, w: 130, h: CAB_H, wall: 'front' }
 ];
 
 // ================================================================
@@ -694,10 +705,10 @@ const FIXTURES = [
 // ================================================================
 const ViewBoxController = {
     /** Full room viewBox (default state) */
-    FULL_VIEW: { x: 0, y: 0, w: 600, h: 450 },
+    FULL_VIEW: { x: 0, y: 0, w: 700, h: 550 },
 
     /** Current viewBox state */
-    current: { x: 0, y: 0, w: 600, h: 450 },
+    current: { x: 0, y: 0, w: 700, h: 550 },
 
     /** Whether currently zoomed in */
     isZoomed: false,
@@ -855,12 +866,12 @@ const ViewBoxController = {
         let viewY = centerY - viewH / 2;
 
         // Clamp to room boundaries
-        viewX = Math.max(0, Math.min(viewX, 600 - viewW));
-        viewY = Math.max(0, Math.min(viewY, 450 - viewH));
+        viewX = Math.max(0, Math.min(viewX, 700 - viewW));
+        viewY = Math.max(0, Math.min(viewY, 550 - viewH));
 
         // Ensure view dimensions don't exceed room
-        viewW = Math.min(viewW, 600);
-        viewH = Math.min(viewH, 450);
+        viewW = Math.min(viewW, 700);
+        viewH = Math.min(viewH, 550);
 
         return { x: viewX, y: viewY, w: viewW, h: viewH };
     },
@@ -874,9 +885,9 @@ const ViewBoxController = {
         let newX = this.current.x + dx;
         let newY = this.current.y + dy;
 
-        // Clamp: x >= 0, y >= 0, x+w <= 600, y+h <= 450
-        newX = Math.max(0, Math.min(newX, 600 - this.current.w));
-        newY = Math.max(0, Math.min(newY, 450 - this.current.h));
+        // Clamp: x >= 0, y >= 0, x+w <= 700, y+h <= 550
+        newX = Math.max(0, Math.min(newX, 700 - this.current.w));
+        newY = Math.max(0, Math.min(newY, 550 - this.current.h));
 
         this.current.x = newX;
         this.current.y = newY;
@@ -1305,36 +1316,49 @@ function renderCabs() {
 
         const cx = f.x + f.w / 2;
         const cy = f.y + f.h / 2;
-        const lines = wrapLabel(data.name);
-        const lineH = 11;
-        const startY = cy - ((lines.length - 1) * lineH) / 2;
-        lines.forEach((line, i) => {
+
+        // Special handling for the tall left workbench: vertical text
+        if (f.id === 'leftWorkbench') {
             const t = document.createElementNS(SVG_NS, 'text');
             t.setAttribute('class', 'cab-text');
             t.setAttribute('x', cx);
-            t.setAttribute('y', startY + i * lineH);
-            t.textContent = line;
+            t.setAttribute('y', cy);
+            t.setAttribute('transform', `rotate(-90 ${cx} ${cy})`);
+            t.setAttribute('font-size', '8');
+            t.textContent = 'Work bench / Closed – Flashlight charging station';
             layer.appendChild(t);
-        });
 
-        // Add "PULL SET" indicator on the outer edge of left workbench
-        if (f.id === 'leftWorkbench') {
-            const indicator = document.createElementNS(SVG_NS, 'rect');
-            indicator.setAttribute('x', f.x - 8);
-            indicator.setAttribute('y', f.y + f.h - 40);
-            indicator.setAttribute('width', 8);
-            indicator.setAttribute('height', 30);
-            indicator.setAttribute('fill', '#005BAC');
-            indicator.setAttribute('rx', '2');
-            layer.appendChild(indicator);
+            // Blue "PULL SET" indicator flush on left edge
+            const ind = document.createElementNS(SVG_NS, 'rect');
+            ind.setAttribute('x', f.x);
+            ind.setAttribute('y', f.y + f.h - 50);
+            ind.setAttribute('width', 6);
+            ind.setAttribute('height', 35);
+            ind.setAttribute('fill', '#005BAC');
+            ind.setAttribute('rx', '2');
+            layer.appendChild(ind);
 
             const pullLabel = document.createElementNS(SVG_NS, 'text');
-            pullLabel.setAttribute('class', 'cab-subtext');
-            pullLabel.setAttribute('x', f.x - 4);
-            pullLabel.setAttribute('y', f.y + f.h - 44);
+            pullLabel.setAttribute('x', f.x + 3);
+            pullLabel.setAttribute('y', f.y + f.h - 55);
+            pullLabel.setAttribute('class', 'fixture-text');
             pullLabel.setAttribute('text-anchor', 'middle');
+            pullLabel.setAttribute('font-size', '7');
             pullLabel.textContent = 'PULL SET';
             layer.appendChild(pullLabel);
+        } else {
+            // Standard horizontal labels
+            const lines = wrapLabel(data.name);
+            const lineH = 11;
+            const startY = cy - ((lines.length - 1) * lineH) / 2;
+            lines.forEach((line, i) => {
+                const t = document.createElementNS(SVG_NS, 'text');
+                t.setAttribute('class', 'cab-text');
+                t.setAttribute('x', cx);
+                t.setAttribute('y', startY + i * lineH);
+                t.textContent = line;
+                layer.appendChild(t);
+            });
         }
     });
 }
@@ -1361,10 +1385,10 @@ window.addEventListener('resize', () => {
     } else {
         // In Zoom_View: re-clamp the current viewBox to room bounds
         let { x, y, w, h } = ViewBoxController.current;
-        x = Math.max(0, Math.min(x, 600 - w));
-        y = Math.max(0, Math.min(y, 450 - h));
-        w = Math.min(w, 600);
-        h = Math.min(h, 450);
+        x = Math.max(0, Math.min(x, 700 - w));
+        y = Math.max(0, Math.min(y, 550 - h));
+        w = Math.min(w, 700);
+        h = Math.min(h, 550);
         ViewBoxController.current = { x, y, w, h };
         ViewBoxController._applyViewBox();
     }
@@ -1452,20 +1476,20 @@ const PrintPoster = {
         let svgContent = '';
 
         // Room border
-        svgContent += '<rect class="poster-room-border" x="5" y="5" width="590" height="440" rx="6"/>';
+        svgContent += '<rect class="poster-room-border" x="80" y="50" width="540" height="420" rx="6"/>';
 
-        // Wall labels
-        svgContent += '<text class="poster-wall-label" x="300" y="20">BACK WALL</text>';
-        svgContent += '<text class="poster-wall-label" x="300" y="436">FRONT WALL</text>';
-        svgContent += '<text class="poster-wall-label" x="16" y="225" transform="rotate(-90 16 225)">LEFT WALL</text>';
-        svgContent += '<text class="poster-wall-label" x="584" y="225" transform="rotate(90 584 225)">RIGHT WALL</text>';
+        // Wall labels (outside border)
+        svgContent += '<text class="poster-wall-label" x="350" y="38">BACK WALL</text>';
+        svgContent += '<text class="poster-wall-label" x="350" y="492">FRONT WALL</text>';
+        svgContent += '<text class="poster-wall-label" x="52" y="260" transform="rotate(-90 52 260)">LEFT WALL</text>';
+        svgContent += '<text class="poster-wall-label" x="648" y="260" transform="rotate(90 648 260)">RIGHT WALL</text>';
 
-        // Window (back wall, right side)
-        svgContent += '<line x1="360" y1="7" x2="490" y2="7" style="stroke:#000;stroke-width:4;"/>';
-        svgContent += '<text class="poster-fixture-text" x="425" y="20">WINDOW</text>';
+        // Window (back wall, over Open Workbench area)
+        svgContent += '<line x1="310" y1="50" x2="460" y2="50" style="stroke:#000;stroke-width:4;"/>';
+        svgContent += '<text class="poster-fixture-text" x="385" y="44">WINDOW</text>';
 
         // Entry (double door, centered on front wall)
-        svgContent += '<line class="poster-door-line" x1="230" y1="443" x2="370" y2="443"/>';
+        svgContent += '<line class="poster-door-line" x1="280" y1="470" x2="420" y2="470"/>';
 
         // Numbered cabinet rects + number badges
         FIXTURES.forEach((f, i) => {
@@ -1477,7 +1501,7 @@ const PrintPoster = {
             svgContent += `<text x="${cx}" y="${cy}" text-anchor="middle" dominant-baseline="central" fill="#fff" font-size="12" font-weight="700">${n}</text>`;
         });
 
-        mapContainer.innerHTML = `<svg viewBox="0 0 600 450" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;">${svgContent}</svg>`;
+        mapContainer.innerHTML = `<svg viewBox="0 0 700 550" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;">${svgContent}</svg>`;
     },
 
     /**
