@@ -542,14 +542,14 @@
                 <rect class="room-border" x="5" y="5" width="590" height="440"/>
 
                 <!-- Wall labels -->
-                <text class="wall-label" x="300" y="18">BACK WALL</text>
-                <text class="wall-label" x="300" y="437">FRONT WALL</text>
-                <text class="wall-label" x="18" y="228" transform="rotate(-90 18 228)">LEFT WALL</text>
-                <text class="wall-label" x="582" y="228" transform="rotate(90 582 228)">RIGHT WALL</text>
+                <text class="wall-label" x="300" y="20">BACK WALL</text>
+                <text class="wall-label" x="300" y="436">FRONT WALL</text>
+                <text class="wall-label" x="16" y="225" transform="rotate(-90 16 225)">LEFT WALL</text>
+                <text class="wall-label" x="584" y="225" transform="rotate(90 584 225)">RIGHT WALL</text>
 
-                <!-- Back-wall window (right side) -->
-                <line class="window-line" x1="330" y1="7" x2="450" y2="7"/>
-                <text class="fixture-text" x="390" y="20">WINDOW</text>
+                <!-- Window (back wall, right side) -->
+                <line class="window-line" x1="360" y1="7" x2="490" y2="7"/>
+                <text class="fixture-text" x="425" y="20">WINDOW</text>
 
                 <!-- Entry (double door, centered on front wall) -->
                 <line class="door-line" x1="230" y1="443" x2="370" y2="443"/>
@@ -580,119 +580,94 @@
 // Constraints: name ≤30 chars, location ≤50 chars, 1–10 categories each ≤40 chars
 // ================================================================
 const ROOM = {
-    // ---- LEFT WALL (back corner -> front/entry corner) ----
-    viseTable: {
-        name: "Vise & Bench",
-        location: "Left wall · back corner",
-        categories: [
-            "Bench vise",
-            "Hammers & mallets",
-            "Punches & drifts",
-            "Cordless work lights"
-        ]
-    },
-    craftsmanChest: {
-        name: "Craftsman Chest",
-        location: "Left wall · rolling chest",
-        categories: [
-            "Ratchets & sockets",
-            "Screwdrivers",
-            "Pliers",
-            "Assorted hand tools"
-        ]
-    },
-    leftBench: {
-        name: "Left Workbench",
-        location: "Left wall · workbench",
-        categories: [
-            "Socket organizers",
-            "Combination wrenches",
-            "Tap & die sets",
-            "Brake bleed bottles"
-        ]
-    },
-    pullerCab: {
-        name: "Puller Cabinet",
-        location: "Left wall · red glass-door cabinet",
-        categories: [
-            "Gear pullers",
-            "Bearing pullers",
-            "Specialty engine pullers",
-            "Slide hammers"
-        ]
-    },
-    waterlooChest: {
-        name: "Waterloo Chest",
-        location: "Left wall · red rolling chest",
-        categories: [
-            "Drawered hand tools",
-            "Precision tools",
-            "Assorted drivers"
-        ]
-    },
-    lockCab: {
-        name: "Locking Cabinet",
-        location: "Left wall · by entry door",
-        categories: [
-            "Secured general storage"
-        ]
-    },
-
     // ---- BACK WALL (left -> right) ----
-    workbench: {
-        name: "Workbench & Wrench Wall",
-        location: "Back wall · main bench",
+    pegBench: {
+        name: "Workbench + Pegboard",
+        location: "Back wall · left section",
         categories: [
             "Combination wrenches (SAE & metric)",
             "Pipe wrench",
-            "Chain / tubing tool",
-            "Blue parts bins",
-            "Socket bins"
+            "Socket bins",
+            "Blue parts bins"
         ]
     },
-    arborPress: {
-        name: "Arbor Press",
-        location: "Back wall · right of bench",
-        categories: [
-            "Arbor / hand press",
-            "Pressing tools"
-        ]
+    openBench: {
+        name: "Open Workbench",
+        location: "Back wall · right section",
+        categories: []
     },
-    cornerCab: {
-        name: "Corner Cabinet",
-        location: "Back-right corner",
+    backCab: {
+        name: "Cabinet (Closed)",
+        location: "Back wall · right corner",
         categories: [
             "General storage",
             "Overflow parts"
         ]
     },
 
-    // ---- RIGHT WALL (back -> front/entry corner) ----
-    measCab: {
-        name: "Measuring Tools",
-        location: "Right wall · shelf cabinet",
+    // ---- LEFT WALL (back -> front) ----
+    chargingStation: {
+        name: "Charging Station",
+        location: "Left wall · back",
         categories: [
-            "Micrometers",
-            "Dial indicators & gauges",
-            "Calipers",
+            "Flashlight charging",
+            "Work lights",
+            "Cordless tool chargers"
+        ]
+    },
+    leftBench: {
+        name: "Work Bench",
+        location: "Left wall · center",
+        categories: [
+            "Bench vise",
+            "Hammers & mallets",
+            "Punches & drifts"
+        ]
+    },
+    pullSet: {
+        name: "Snap-On Pull Set",
+        location: "Left wall · front",
+        categories: [
+            "Gear pullers",
+            "Bearing pullers",
+            "Slide hammers",
+            "Specialty pullers"
+        ]
+    },
+
+    // ---- RIGHT WALL (back -> front) ----
+    rightCabUpper: {
+        name: "Cabinet (Closed)",
+        location: "Right wall · upper",
+        categories: [
+            "Micrometers & calipers",
             "Torque wrenches",
+            "Dial indicators",
             "Blue-Point cases"
         ]
     },
-    cumminsCab: {
-        name: "Cummins Specialty",
-        location: "Right wall · shelf cabinet",
+    rightCabLower: {
+        name: "Cabinet (Closed)",
+        location: "Right wall · lower",
         categories: [
-            "Seal drivers",
-            "Pilot bearing pullers",
             "Cummins service tools",
+            "Seal drivers",
             "Gauge sets",
             "Small-parts bins"
         ]
     },
-    redRoller: {
-        name: "Red Roller Chest",
-        location: "Right wall · front corner",
+
+    // ---- FRONT AREA ----
+    frontCab: {
+        name: "Cabinet (Closed)",
+        location: "Front · left of door",
+        categories: [
+            "Secured general storage"
+        ]
+    },
+    toolBox: {
+        name: "Tool Box",
+        location: "Front · right of door",
         categories: [
             "Diagnostic scale / scanner",
             "Drawered hand tools",
@@ -703,28 +678,28 @@ const ROOM = {
 
 // ================================================================
 // FIXTURES — Single source of truth for cabinet geometry.
-// Drives BOTH the interactive SVG and the print poster so they never drift.
-// Coordinates are in the 600x450 room viewBox. Origin top-left.
-//   BACK wall = top (small y) · FRONT/entry = bottom · LEFT = small x · RIGHT = large x
+// Drives BOTH the interactive SVG and the print poster.
+// ViewBox: 600 x 450 (landscape). Back = top, Front = bottom.
+// All cabinets sized uniformly at 100x60 (back wall) or 80x80 (side/front).
 // ================================================================
 const FIXTURES = [
-    // LEFT WALL (top = back corner, bottom = front/entry corner)
-    { id: 'viseTable',      x: 18,  y: 40,  w: 92,  h: 52, wall: 'left' },
-    { id: 'craftsmanChest', x: 18,  y: 100, w: 92,  h: 56, wall: 'left' },
-    { id: 'leftBench',      x: 18,  y: 164, w: 92,  h: 56, wall: 'left' },
-    { id: 'pullerCab',      x: 18,  y: 228, w: 92,  h: 56, wall: 'left' },
-    { id: 'waterlooChest',  x: 18,  y: 292, w: 92,  h: 56, wall: 'left' },
-    { id: 'lockCab',        x: 18,  y: 356, w: 92,  h: 52, wall: 'left' },
-
     // BACK WALL (left -> right along the top)
-    { id: 'workbench',      x: 130, y: 28,  w: 195, h: 62, wall: 'back' },
-    { id: 'arborPress',     x: 335, y: 28,  w: 62,  h: 62, wall: 'back' },
-    { id: 'cornerCab',      x: 407, y: 28,  w: 72,  h: 62, wall: 'back' },
+    { id: 'pegBench',        x: 30,  y: 25,  w: 190, h: 55, wall: 'back' },
+    { id: 'openBench',       x: 230, y: 25,  w: 170, h: 55, wall: 'back' },
+    { id: 'backCab',         x: 410, y: 25,  w: 100, h: 55, wall: 'back' },
 
-    // RIGHT WALL (top = back corner, bottom = front/entry corner)
-    { id: 'measCab',        x: 490, y: 108, w: 92,  h: 72, wall: 'right' },
-    { id: 'cumminsCab',     x: 490, y: 190, w: 92,  h: 72, wall: 'right' },
-    { id: 'redRoller',      x: 490, y: 300, w: 92,  h: 72, wall: 'right' }
+    // LEFT WALL (top/back -> bottom/front)
+    { id: 'chargingStation', x: 20,  y: 105, w: 80,  h: 90, wall: 'left' },
+    { id: 'leftBench',       x: 20,  y: 210, w: 80,  h: 90, wall: 'left' },
+    { id: 'pullSet',         x: 20,  y: 315, w: 80,  h: 70, wall: 'left' },
+
+    // RIGHT WALL (top/back -> bottom/front)
+    { id: 'rightCabUpper',   x: 500, y: 120, w: 80,  h: 90, wall: 'right' },
+    { id: 'rightCabLower',   x: 500, y: 225, w: 80,  h: 90, wall: 'right' },
+
+    // FRONT AREA (bottom)
+    { id: 'frontCab',        x: 60,  y: 365, w: 160, h: 60, wall: 'front' },
+    { id: 'toolBox',         x: 380, y: 365, w: 140, h: 60, wall: 'front' }
 ];
 
 // ================================================================
@@ -1473,14 +1448,14 @@ const PrintPoster = {
         svgContent += '<rect class="poster-room-border" x="5" y="5" width="590" height="440" rx="6"/>';
 
         // Wall labels
-        svgContent += '<text class="poster-wall-label" x="300" y="18">BACK WALL</text>';
-        svgContent += '<text class="poster-wall-label" x="300" y="437">FRONT WALL</text>';
-        svgContent += '<text class="poster-wall-label" x="14" y="228" transform="rotate(-90 14 228)">LEFT WALL</text>';
-        svgContent += '<text class="poster-wall-label" x="586" y="228" transform="rotate(90 586 228)">RIGHT WALL</text>';
+        svgContent += '<text class="poster-wall-label" x="300" y="20">BACK WALL</text>';
+        svgContent += '<text class="poster-wall-label" x="300" y="436">FRONT WALL</text>';
+        svgContent += '<text class="poster-wall-label" x="16" y="225" transform="rotate(-90 16 225)">LEFT WALL</text>';
+        svgContent += '<text class="poster-wall-label" x="584" y="225" transform="rotate(90 584 225)">RIGHT WALL</text>';
 
-        // Back-wall window (right side)
-        svgContent += '<line x1="330" y1="7" x2="450" y2="7" style="stroke:#000;stroke-width:4;"/>';
-        svgContent += '<text class="poster-fixture-text" x="390" y="20">WINDOW</text>';
+        // Window (back wall, right side)
+        svgContent += '<line x1="360" y1="7" x2="490" y2="7" style="stroke:#000;stroke-width:4;"/>';
+        svgContent += '<text class="poster-fixture-text" x="425" y="20">WINDOW</text>';
 
         // Entry (double door, centered on front wall)
         svgContent += '<line class="poster-door-line" x1="230" y1="443" x2="370" y2="443"/>';
