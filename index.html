@@ -531,7 +531,7 @@
             <img src="tenneco-shark.png" alt="Tenneco" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
             <span class="topbar-logo-fallback">TENNECO</span>
         </span>
-        <span class="topbar-title">Build Room #1</span>
+        <span class="topbar-title">Engine Build Room #1</span>
         <button class="topbar-print-btn" onclick="PrintPoster.generate()">Print</button>
     </div>
 
@@ -547,12 +547,13 @@
                 <text class="wall-label" x="16" y="225" transform="rotate(-90 16 225)">LEFT WALL</text>
                 <text class="wall-label" x="584" y="225" transform="rotate(90 584 225)">RIGHT WALL</text>
 
-                <!-- Window (back wall, right side) -->
-                <line class="window-line" x1="360" y1="7" x2="490" y2="7"/>
-                <text class="fixture-text" x="425" y="20">WINDOW</text>
+                <!-- Window (back wall, spans over Open Workbench area) -->
+                <line class="window-line" x1="235" y1="7" x2="400" y2="7"/>
+                <text class="fixture-text" x="317" y="20">WINDOW</text>
 
-                <!-- Entry (double door, centered on front wall) -->
+                <!-- Entry (double door, centered on front wall with gap in wall) -->
                 <line class="door-line" x1="230" y1="443" x2="370" y2="443"/>
+                <rect x="228" y="440" width="144" height="5" fill="#000000"/>
 
                 <!-- Cabinet layer (rendered by JS from FIXTURES) -->
                 <g id="cabLayer"></g>
@@ -593,7 +594,7 @@ const ROOM = {
     },
     openBench: {
         name: "Open Workbench",
-        location: "Back wall · right section",
+        location: "Back wall · center",
         categories: []
     },
     backCab: {
@@ -605,33 +606,17 @@ const ROOM = {
         ]
     },
 
-    // ---- LEFT WALL (back -> front) ----
-    chargingStation: {
-        name: "Charging Station",
-        location: "Left wall · back",
+    // ---- LEFT WALL (single consolidated workbench) ----
+    leftWorkbench: {
+        name: "Workbench",
+        location: "Left wall · full length",
         categories: [
-            "Flashlight charging",
-            "Work lights",
-            "Cordless tool chargers"
-        ]
-    },
-    leftBench: {
-        name: "Work Bench",
-        location: "Left wall · center",
-        categories: [
+            "Flashlight charging station",
             "Bench vise",
             "Hammers & mallets",
-            "Punches & drifts"
-        ]
-    },
-    pullSet: {
-        name: "Snap-On Pull Set",
-        location: "Left wall · front",
-        categories: [
-            "Gear pullers",
-            "Bearing pullers",
-            "Slide hammers",
-            "Specialty pullers"
+            "Punches & drifts",
+            "Snap-On pull set",
+            "Work lights & chargers"
         ]
     },
 
@@ -680,26 +665,28 @@ const ROOM = {
 // FIXTURES — Single source of truth for cabinet geometry.
 // Drives BOTH the interactive SVG and the print poster.
 // ViewBox: 600 x 450 (landscape). Back = top, Front = bottom.
-// All cabinets sized uniformly at 100x60 (back wall) or 80x80 (side/front).
+//
+// IMPORTANT: All "Cabinet (Closed)" items use identical size: 100w x 55h
+// to match the sketch note that cabinets are all the same size.
 // ================================================================
+const CAB_W = 100, CAB_H = 55; // Uniform cabinet dimensions
+
 const FIXTURES = [
     // BACK WALL (left -> right along the top)
     { id: 'pegBench',        x: 30,  y: 25,  w: 190, h: 55, wall: 'back' },
     { id: 'openBench',       x: 230, y: 25,  w: 170, h: 55, wall: 'back' },
-    { id: 'backCab',         x: 410, y: 25,  w: 100, h: 55, wall: 'back' },
+    { id: 'backCab',         x: 410, y: 25,  w: CAB_W, h: CAB_H, wall: 'back' },
 
-    // LEFT WALL (top/back -> bottom/front)
-    { id: 'chargingStation', x: 20,  y: 105, w: 80,  h: 90, wall: 'left' },
-    { id: 'leftBench',       x: 20,  y: 210, w: 80,  h: 90, wall: 'left' },
-    { id: 'pullSet',         x: 20,  y: 315, w: 80,  h: 70, wall: 'left' },
+    // LEFT WALL (single consolidated workbench spanning most of the wall)
+    { id: 'leftWorkbench',   x: 20,  y: 100, w: 70,  h: 280, wall: 'left' },
 
-    // RIGHT WALL (top/back -> bottom/front)
-    { id: 'rightCabUpper',   x: 500, y: 120, w: 80,  h: 90, wall: 'right' },
-    { id: 'rightCabLower',   x: 500, y: 225, w: 80,  h: 90, wall: 'right' },
+    // RIGHT WALL (top/back -> bottom/front) — uniform cabinet size
+    { id: 'rightCabUpper',   x: 500, y: 115, w: CAB_W, h: CAB_H, wall: 'right' },
+    { id: 'rightCabLower',   x: 500, y: 220, w: CAB_W, h: CAB_H, wall: 'right' },
 
-    // FRONT AREA (bottom)
-    { id: 'frontCab',        x: 60,  y: 365, w: 160, h: 60, wall: 'front' },
-    { id: 'toolBox',         x: 380, y: 365, w: 140, h: 60, wall: 'front' }
+    // FRONT AREA (bottom) — cabinet same size, tool box slightly wider
+    { id: 'frontCab',        x: 60,  y: 370, w: CAB_W + 50, h: CAB_H, wall: 'front' },
+    { id: 'toolBox',         x: 390, y: 370, w: 130, h: CAB_H, wall: 'front' }
 ];
 
 // ================================================================
@@ -1329,6 +1316,26 @@ function renderCabs() {
             t.textContent = line;
             layer.appendChild(t);
         });
+
+        // Add "PULL SET" indicator on the outer edge of left workbench
+        if (f.id === 'leftWorkbench') {
+            const indicator = document.createElementNS(SVG_NS, 'rect');
+            indicator.setAttribute('x', f.x - 8);
+            indicator.setAttribute('y', f.y + f.h - 40);
+            indicator.setAttribute('width', 8);
+            indicator.setAttribute('height', 30);
+            indicator.setAttribute('fill', '#005BAC');
+            indicator.setAttribute('rx', '2');
+            layer.appendChild(indicator);
+
+            const pullLabel = document.createElementNS(SVG_NS, 'text');
+            pullLabel.setAttribute('class', 'cab-subtext');
+            pullLabel.setAttribute('x', f.x - 4);
+            pullLabel.setAttribute('y', f.y + f.h - 44);
+            pullLabel.setAttribute('text-anchor', 'middle');
+            pullLabel.textContent = 'PULL SET';
+            layer.appendChild(pullLabel);
+        }
     });
 }
 
